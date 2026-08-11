@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Monitor Global Multi-Fonte</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script src="https://unpkg.com/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">B3 oficial + Yahoo Finance via RapidAPI</p>
+          <h1>Monitor Global Multi-Fonte</h1>
+        </div>
+        <form class="toolbar" id="asset-form">
+          <label>
+            Fonte
+            <select id="source-select" aria-label="Selecionar fonte">
+              <option value="auto">Auto</option>
+              <option value="b3">B3</option>
+              <option value="yahoo">Yahoo</option>
+            </select>
+          </label>
+          <label class="search-field">
+            Codigo do ativo
+            <input id="asset-input" type="search" placeholder="VALE3, AAPL, ^IXIC..." autocomplete="off">
+          </label>
+          <button type="submit">Abrir</button>
+        </form>
+      </header>
+
+      <section class="status-line" aria-live="polite">
+        <span id="load-state">Carregando fontes...</span>
+        <span id="source-state"></span>
+      </section>
+
+      <section class="world-section" aria-labelledby="world-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="world-title">Mundo agora</h2>
+            <span id="world-caption">Principais indices por mercado</span>
+          </div>
+          <button type="button" class="secondary" id="refresh-world">Atualizar</button>
+        </div>
+        <div class="world-grid" id="world-grid"></div>
+      </section>
+
+      <section class="detail-grid">
+        <section class="asset-panel" aria-labelledby="asset-title">
+          <div class="section-heading">
+            <div>
+              <h2 id="asset-title">Ativo selecionado</h2>
+              <span id="asset-subtitle">IBOV</span>
+            </div>
+            <a id="yahoo-link" class="button-link" href="https://finance.yahoo.com/quote/%5EBVSP" target="_blank" rel="noreferrer">Yahoo</a>
+          </div>
+          <div class="metrics asset-metrics">
+            <article>
+              <span>Preco</span>
+              <strong id="asset-price">--</strong>
+              <small id="asset-market">--</small>
+            </article>
+            <article>
+              <span>Variacao</span>
+              <strong id="asset-change">--</strong>
+              <small id="asset-updated">--</small>
+            </article>
+            <article>
+              <span>Volume</span>
+              <strong id="asset-volume">--</strong>
+              <small id="asset-currency">--</small>
+            </article>
+          </div>
+          <p id="asset-description" class="description">Selecione um ativo para ver detalhes.</p>
+          <div id="asset-news" class="news-list"></div>
+        </section>
+
+        <section class="chart-panel" aria-labelledby="chart-title">
+          <div class="section-heading chart-heading">
+            <div>
+              <h2 id="chart-title">Grafico de trade</h2>
+              <span id="chart-caption">Candles, linha e volume</span>
+            </div>
+            <div class="chart-controls">
+              <label>
+                Tipo
+                <select id="chart-type">
+                  <option value="candles">Candles</option>
+                  <option value="line">Linha</option>
+                  <option value="volume">Volume</option>
+                </select>
+              </label>
+              <label>
+                Periodo
+                <select id="chart-range">
+                  <option value="1d">1d</option>
+                  <option value="5d">5d</option>
+                  <option value="1mo" selected>1mo</option>
+                  <option value="6mo">6mo</option>
+                  <option value="1y">1y</option>
+                </select>
+              </label>
+              <label>
+                Intervalo
+                <select id="chart-interval">
+                  <option value="5m">5m</option>
+                  <option value="15m">15m</option>
+                  <option value="1d" selected>1d</option>
+                  <option value="1wk">1wk</option>
+                </select>
+              </label>
+            </div>
+          </div>
+          <div id="trade-chart" class="trade-chart" role="img" aria-label="Grafico do ativo selecionado"></div>
+          <p id="chart-message" class="panel-message"></p>
+        </section>
+      </section>
+
+      <section class="content-grid">
+        <section class="components-panel" aria-labelledby="components-title">
+          <div class="section-heading table-heading">
+            <div>
+              <h2 id="components-title">Componentes do indice</h2>
+              <span id="components-count">--</span>
+            </div>
+            <button type="button" class="secondary" id="toggle-components-sort">Ordenar por variacao</button>
+          </div>
+          <div id="components-message" class="panel-message"></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Codigo</th>
+                  <th>Empresa</th>
+                  <th class="numeric">Part.</th>
+                  <th class="numeric">Preco</th>
+                  <th class="numeric">Var.</th>
+                  <th class="numeric">Volume</th>
+                  <th class="numeric">Acao</th>
+                </tr>
+              </thead>
+              <tbody id="components-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside class="portfolio-panel" aria-labelledby="portfolio-title">
+          <div class="section-heading">
+            <div>
+              <h2 id="portfolio-title">Carteira</h2>
+              <span id="portfolio-caption">Importe CSV ou TXT com codigo e quantidade</span>
+            </div>
+          </div>
+          <label class="file-input">
+            Arquivo CSV/TXT
+            <input id="portfolio-file" type="file" accept=".csv,.txt,text/csv,text/plain">
+          </label>
+          <textarea id="portfolio-text" rows="5" placeholder="VALE3,10&#10;AAPL;5&#10;PETR4&#9;20"></textarea>
+          <div class="portfolio-actions">
+            <button type="button" id="import-portfolio">Importar</button>
+            <button type="button" class="secondary" id="clear-portfolio">Limpar</button>
+          </div>
+          <p id="portfolio-status" class="panel-message"></p>
+          <div id="portfolio-list" class="portfolio-list"></div>
+        </aside>
+      </section>
+    </main>
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
