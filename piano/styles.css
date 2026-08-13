@@ -592,6 +592,33 @@ h5 { font-size: .86rem; margin: 0 0 8px; }
 .pill--1 { background: var(--green-2); color: var(--green); }
 .pill--2 { background: var(--accent-2); color: var(--accent); }
 .pill--3 { background: light-dark(#f2edfd, #241f38); color: var(--violet); }
+/* Nivel trazido por um content pack, fora dos tres canonicos. */
+.pill--4 { background: var(--amber-2); color: var(--amber); }
+
+/* ------------------------------------------------------------ piano-roll */
+
+.player-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.player-head h4 { margin: 0; }
+
+.roll-box {
+  margin: 12px 0 4px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+.roll { display: block; width: 100%; min-width: 320px; height: 190px; }
+
+.roll-blackrow { fill: light-dark(#e6eaf2, #1a2029); }
+.roll-bar { stroke: var(--line); stroke-width: 1; }
+.roll-note { fill: var(--accent); }
+.roll-note--left { fill: var(--violet); }
+.roll-cursor { stroke: var(--amber); stroke-width: 2; }
+
+.player-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+
+.exercise-wrap .controls { margin-bottom: 10px; }
+.exercise-wrap .widget-card { margin-top: 0; }
 
 /* ----------------------------------------------------------------- dock */
 
@@ -654,4 +681,12 @@ h5 { font-size: .86rem; margin: 0 0 8px; }
 @media print {
   .topbar, .dock, .footer, .lesson-footer, .scale-bar, .prog-bar { display: none; }
   body { padding: 0; background: #fff; }
+}
+
+/* Bloco de codigo vindo de um content pack (cerca ``` no Markdown). */
+.math-box pre.mono {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: .85rem;
 }

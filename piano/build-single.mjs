@@ -13,19 +13,23 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const DIR = dirname(fileURLToPath(import.meta.url));
-const out = resolve(process.argv[2] || join(DIR, "dist", "piano-teoria.html"));
-
-const SCRIPTS = [
-  "js/theory.js",
-  "js/keyboard.js",
-  "js/audio.js",
-  "js/curriculum-a.js",
-  "js/curriculum-b.js",
-  "js/widgets.js",
-  "js/app.js"
-];
 
 const read = (p) => readFileSync(join(DIR, p), "utf8");
+
+/*
+ * A lista de scripts sai do proprio index.html, que e a fonte de verdade.
+ * Antes havia duas listas em paralelo e acrescentar um arquivo em uma e
+ * esquecer da outra quebrava so o bundle — em silencio.
+ */
+export function scriptsFromIndex(html) {
+  const out = [];
+  const re = /<script\s+src="\.\/([^"]+)"><\/script>/g;
+  let m;
+  while ((m = re.exec(html))) out.push(m[1]);
+  return out;
+}
+
+export const SCRIPTS = scriptsFromIndex(read("index.html"));
 
 /*
  * O visualizador de artefatos expressa o tema de tres formas: sem marca
@@ -69,21 +73,28 @@ const BODY = `
     <div id="dock" class="dock" aria-label="Metronomo e audio"></div>
 `;
 
-const parts = [
-  "<title>Piano Teoria</title>",
-  "<style>",
-  read("styles.css").trimEnd(),
-  THEME_BRIDGE,
-  "</style>",
-  BODY,
-  ...SCRIPTS.map((f) => "<script>\n" + read(f).trimEnd() + "\n<\/script>")
-];
+export function bundle() {
+  if (!SCRIPTS.length) throw new Error("Nenhum <script src> encontrado em index.html.");
+  return [
+    "<title>Piano Teoria</title>",
+    "<style>",
+    read("styles.css").trimEnd(),
+    THEME_BRIDGE,
+    "</style>",
+    BODY,
+    ...SCRIPTS.map((f) => "<script>\n" + read(f).trimEnd() + "\n<\/script>")
+  ].join("\n");
+}
 
-const html = parts.join("\n");
-mkdirSync(dirname(out), { recursive: true });
-writeFileSync(out, html, "utf8");
-
-const kb = (n) => (n / 1024).toFixed(0) + " KB";
-console.log("Gerado: " + out);
-console.log("Tamanho: " + kb(Buffer.byteLength(html)) +
-  "  (" + SCRIPTS.length + " scripts + css embutidos)");
+/* So constroi quando executado direto — importar este modulo nao gera arquivo,
+   para que os testes possam reusar scriptsFromIndex() sem efeito colateral. */
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const out = resolve(process.argv[2] || join(DIR, "dist", "piano-teoria.html"));
+  const html = bundle();
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, html, "utf8");
+  const kb = (n) => (n / 1024).toFixed(0) + " KB";
+  console.log("Gerado: " + out);
+  console.log("Tamanho: " + kb(Buffer.byteLength(html)) +
+    "  (" + SCRIPTS.length + " scripts + css embutidos)");
+}

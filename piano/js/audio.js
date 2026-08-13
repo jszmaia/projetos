@@ -128,6 +128,59 @@
     return up.concat(down);
   }
 
+  /**
+   * Toca uma linha do tempo de notas com inicio e duracao proprios — o que
+   * `playSequence` nao faz, por assumir espacamento uniforme.
+   *
+   * notes: [{ midi, start, dur, hand }] com start/dur em TEMPOS (nao segundos),
+   * convertidos aqui pelo bpm. Retorna um handle com stop().
+   */
+  function playTimeline(notes, opts) {
+    opts = opts || {};
+    var bpm = opts.bpm || 90;
+    var spb = 60 / bpm;                    // segundos por tempo
+    var timers = [];
+    var stopped = false;
+
+    if (!enabled) return { stop: function () {}, duration: 0 };
+    var c = ensure();
+    if (!c) return { stop: function () {}, duration: 0 };
+
+    notes.forEach(function (n) {
+      if (opts.hands && opts.hands.indexOf(n.hand || "right") < 0) return;
+      var when = n.start * spb;
+      play(n.midi, Math.max(0.08, n.dur * spb * 0.95), when, opts.velocity || 0.9);
+      if (opts.onNote) {
+        timers.push(setTimeout(function () {
+          if (!stopped) opts.onNote(n);
+        }, when * 1000));
+      }
+    });
+
+    var total = notes.reduce(function (max, n) {
+      return Math.max(max, (n.start + n.dur) * spb);
+    }, 0);
+    if (opts.onEnd) timers.push(setTimeout(function () {
+      if (!stopped) opts.onEnd();
+    }, total * 1000));
+
+    return {
+      duration: total,
+      stop: function () {
+        stopped = true;
+        timers.forEach(clearTimeout);
+        timers = [];
+        // Corta o som ja agendado recriando o barramento principal.
+        if (master) {
+          try { master.disconnect(); } catch (e) { /* ja desconectado */ }
+          master = c.createGain();
+          master.gain.value = 0.28;
+          master.connect(c.destination);
+        }
+      }
+    };
+  }
+
   function setVolume(v) {
     ensure();
     if (master) master.gain.value = v;
@@ -182,7 +235,7 @@
   global.PT = global.PT || {};
   global.PT.audio = {
     play: play, playFreq: playFreq, playChord: playChord,
-    playSequence: playSequence, stopSequence: stopSequence,
+    playSequence: playSequence, stopSequence: stopSequence, playTimeline: playTimeline,
     scaleToMidi: scaleToMidi,
     setVolume: setVolume, setEnabled: setEnabled, isEnabled: isEnabled,
     setA4: setA4, getA4: getA4,

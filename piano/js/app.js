@@ -123,13 +123,12 @@
     hero.appendChild(heroBar);
     wrap.appendChild(hero);
 
-    var levels = ["Iniciante", "Intermediario", "Avancado"];
-    levels.forEach(function (lv, li) {
-      var mods = MODULES.filter(function (m) { return m.level === lv; });
+    orderedLevels().forEach(function (lv) {
+      var mods = modulesOfLevel(lv);
       if (!mods.length) return;
       var sec = h("section", "level-section");
       sec.appendChild(h("h2", "level-title",
-        '<span class="pill pill--' + (li + 1) + '">' + lv + "</span>"));
+        '<span class="pill pill--' + levelIdx(lv) + '">' + lv + "</span>"));
       var grid = h("div", "module-grid");
       mods.forEach(function (m) { grid.appendChild(moduleCard(m)); });
       sec.appendChild(grid);
@@ -245,8 +244,40 @@
     return wrap;
   }
 
+  /*
+   * Niveis: os tres canonicos vem primeiro, na ordem pedagogica. Qualquer nivel
+   * novo trazido por um content pack e descoberto a partir dos dados e entra
+   * depois deles — antes esta lista era fixa, e um pack com nivel desconhecido
+   * simplesmente nao aparecia na tela, sem erro nenhum.
+   */
+  var KNOWN_LEVELS = ["Iniciante", "Intermediario", "Avancado"];
+
+  function orderedLevels() {
+    var seen = [];
+    MODULES.forEach(function (m) {
+      if (m.level && seen.indexOf(m.level) < 0) seen.push(m.level);
+    });
+    var known = KNOWN_LEVELS.filter(function (l) { return seen.indexOf(l) >= 0; });
+    var extra = seen.filter(function (l) { return KNOWN_LEVELS.indexOf(l) < 0; });
+    return known.concat(extra);
+  }
+
+  /** Modulos de um nivel, ordenados por `order` (packs) e depois pela ordem de carga. */
+  function modulesOfLevel(level) {
+    return MODULES
+      .map(function (m, i) { return { m: m, i: i }; })
+      .filter(function (x) { return x.m.level === level; })
+      .sort(function (a, b) {
+        var d = (a.m.order || 0) - (b.m.order || 0);
+        return d !== 0 ? d : a.i - b.i;
+      })
+      .map(function (x) { return x.m; });
+  }
+
+  /** Classe da pilha de cor. Niveis desconhecidos caem numa 4a cor neutra. */
   function levelIdx(level) {
-    return { Iniciante: 1, Intermediario: 2, Avancado: 3 }[level] || 1;
+    var i = KNOWN_LEVELS.indexOf(level);
+    return i >= 0 ? i + 1 : 4;
   }
 
   /* ------------------------------------------------------------------ *

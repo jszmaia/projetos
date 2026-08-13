@@ -26,15 +26,19 @@ Nao ha build, nao ha dependencias, nao ha rede. Todo o audio e sintetizado pela 
 
 ## O que tem dentro
 
-**Curso** — 19 modulos, 50 licoes, em tres niveis:
+**Curso** — 20 modulos, 53 licoes, em quatro niveis:
 
 | Nivel | Modulos | Conteudo |
 |---|---|---|
 | Iniciante | 0–5 | teclado, frequencia, temperamento igual, intervalos, serie harmonica, ciclo de quintas, escala maior |
 | Intermediario | 6–13 | menores, modos gregos, campo harmonico, tetrades, ii-V-I, pentatonicas, blues, rock, pop |
 | Avancado | 14–18 | escalas simetricas, menor melodica e bebop, escalas do mundo, tensoes e reharmonizacao, tecnica e rotina |
+| Tecnica | pack `tecnica` | exercicios de mecanismo tocaveis em qualquer tonalidade — Hanon nº 1, escala, arpejo, tercas, movimento contrario, cadencia |
 
 **Ferramentas**
+
+- **Player de exercicios** — piano-roll com as teclas acendendo, tempo ajustavel e maos
+  separadas. Troque a tonalidade e o exercicio e regenerado.
 
 - **Explorador de escalas** — 50 escalas com diagrama, formula, graus, vetor intervalar, campo
   harmonico, escalas vizinhas e a razao de existirem.
@@ -49,20 +53,83 @@ Nao ha build, nao ha dependencias, nao ha rede. Todo o audio e sintetizado pela 
 
 ```
 piano/
-├── index.html          shell
+├── index.html          shell — e a FONTE DE VERDADE da lista de scripts
 ├── styles.css          tema claro/escuro via light-dark()
 ├── serve.mjs           servidor estatico minimo (opcional)
-├── test-theory.mjs     891 assercoes sobre o motor teorico
+├── build-single.mjs    empacota tudo num HTML autocontido
+├── test-theory.mjs     1262 assercoes
+├── content/            FONTE dos content packs (Markdown revisavel)
+│   └── tecnica/        pack.json + uma licao por arquivo .md
+├── tools/
+│   └── build-content.mjs   content/ → js/pack-<id>.js
 └── js/
     ├── theory.js       motor: notas, grafia, intervalos, 50 escalas,
     │                   33 acordes, harmonizacao, armaduras, fisica
+    ├── exercises.js    exercicios de tecnica gerados por regra
     ├── keyboard.js     desenho SVG do teclado
-    ├── audio.js        sintetizador e metronomo (Web Audio API)
+    ├── audio.js        sintetizador, metronomo e linha do tempo
     ├── curriculum-a.js modulos 0–9
     ├── curriculum-b.js modulos 10–18
-    ├── widgets.js      96 visualizacoes usadas nas licoes
+    ├── pack-tecnica.js GERADO por tools/build-content.mjs
+    ├── widgets.js      97 visualizacoes usadas nas licoes
     └── app.js          roteamento, views, progresso
 ```
+
+### Exercicios sao regras, nao notas
+
+`js/exercises.js` guarda o **padrao**, e as notas sao geradas na hora. O Hanon nº 1,
+por exemplo, cabe em oito numeros — o padrao em graus da escala:
+
+```
+[0, +2, +3, +4, +5, +4, +3, +2]   transposto um grau a cada repeticao
+```
+
+Isso gera as 224 notas da mao direita. As consequencias sao praticas: nao ha o que
+digitar errado, e o mesmo exercicio existe em **todas as 12 tonalidades**, com as
+notas recalculadas — coisa que o livro impresso nao oferece.
+
+Cada exercicio declara sua **proveniencia**, para nao apresentar invencao como fonte
+historica:
+
+| `source` | Significado |
+|---|---|
+| `hanon` | padrao conferido nota a nota contra o texto impresso |
+| `derivado` | construido a partir de `theory.js`; correto por construcao, mas nao e transcricao de nenhuma edicao |
+
+Hoje so o Hanon nº 1 tem `source: "hanon"`. Os nº 2–60 exigem a partitura em maos;
+o motor ja esta pronto para recebe-los — cada um custa uma linha de numeros.
+
+### Notacao: piano-roll, nao pauta
+
+O player desenha um **piano-roll alinhado ao teclado**, com as teclas acendendo. Isso
+e uma escolha, nao uma limitacao encontrada: renderizar pauta tradicional e um projeto
+inteiro por si so, e para quem esta ao teclado aprendendo, ver a forma do exercicio
+subindo e descendo sobre as teclas e mais legivel que ler claves.
+
+### Content packs
+
+Conteudo novo nao precisa tocar na aplicacao: `js/app.js` so le `PT.CURRICULUM`, e
+qualquer script carregado antes dele pode acrescentar modulos.
+
+A fonte fica em Markdown, porque escrever conteudo dentro de template literals em JS
+e insuportavel (aspas escapadas, diff ilegivel). O JS gerado e **commitado**, para o
+runtime continuar sem build.
+
+```bash
+node tools/build-content.mjs           # compila todos os packs
+node tools/build-content.mjs tecnica   # so um
+```
+
+O Markdown aceita um subconjunto (titulos, listas, tabelas, citacao, cerca de codigo),
+HTML cru para o que o subconjunto nao cobre, e diretivas de widget:
+
+```markdown
+::scale tonic=C scale=jonio
+::exercise ex=hanon-1 tonic=C
+```
+
+Ao criar um pack novo, acrescente o `<script src>` no `index.html` — o empacotador
+deriva a lista dali, entao nao ha uma segunda lista para manter em sincronia.
 
 ### Nada e tabelado a mao
 
@@ -104,8 +171,10 @@ todas as tonalidades, que a escala alterada de X e a menor melodica de X+1 semit
 numeros fisicos citados no material batem (comma pitagorico = 23,460 cents; quinta justa =
 701,955; 7o harmonico = 968,826; batimento da terca maior em Do4 ≈ 10,4 Hz).
 
-Tambem confere que toda escala e tonica citadas nas licoes existem, e que os 96 widgets
-referenciados estao implementados.
+Tambem confere que toda escala, tonica e exercicio citados nas licoes existem, que os 97
+widgets referenciados estao implementados, que o Hanon nº 1 gerado bate nota a nota com o
+texto impresso, que todo exercicio gera MIDI dentro das 88 teclas em todas as tonalidades,
+e que a lista de scripts do `index.html` nao divergiu do empacotador.
 
 ## Limites conhecidos
 

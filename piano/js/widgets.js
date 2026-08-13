@@ -2037,6 +2037,267 @@
   };
 
   /* ------------------------------------------------------------------ *
+   * Player de peca / exercicio
+   *
+   * Piano-roll alinhado ao teclado, em vez de pauta tradicional: muito mais
+   * barato de construir e, para quem esta ao teclado aprendendo, mais legivel.
+   * Reusa keyboard.flash() e audio.playTimeline() — e fiacao, nao construcao.
+   * ------------------------------------------------------------------ */
+
+  var HAND_LABEL = { right: "direita", left: "esquerda" };
+
+  function noteRange(notes) {
+    var lo = 127, hi = 0;
+    notes.forEach(function (n) {
+      if (n.midi < lo) lo = n.midi;
+      if (n.midi > hi) hi = n.midi;
+    });
+    if (lo > hi) { lo = 60; hi = 72; }
+    var startMidi = lo - T.mod(lo, 12);              // desce ate o Do abaixo
+    var octaves = Math.max(1, Math.ceil((hi - startMidi + 1) / 12));
+    return { lo: lo, hi: hi, startMidi: startMidi, octaves: octaves };
+  }
+
+  function pianoRoll(piece, range) {
+    var svgNS = "http://www.w3.org/2000/svg";
+    var beats = piece.beats || 1;
+    var pxPerBeat = 26;
+    var rowH = 7;
+    var rows = range.octaves * 12;
+    var W = Math.max(320, beats * pxPerBeat);
+    var H = rows * rowH;
+
+    var svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    svg.setAttribute("class", "roll");
+    svg.setAttribute("preserveAspectRatio", "none");
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", "Representacao das notas ao longo do tempo");
+
+    function mk(tag, attrs) {
+      var e = document.createElementNS(svgNS, tag);
+      for (var k in attrs) e.setAttribute(k, attrs[k]);
+      return e;
+    }
+
+    // Faixas das teclas pretas, para orientar a leitura vertical.
+    for (var r = 0; r < rows; r++) {
+      var pc = T.mod(range.startMidi + r, 12);
+      if (KB.BLACK_PC.indexOf(pc) >= 0) {
+        svg.appendChild(mk("rect", {
+          x: 0, y: H - (r + 1) * rowH, width: W, height: rowH, class: "roll-blackrow"
+        }));
+      }
+    }
+    // Linhas de compasso a cada 4 tempos.
+    for (var b = 0; b <= beats; b += 4) {
+      svg.appendChild(mk("line", {
+        x1: b * pxPerBeat, y1: 0, x2: b * pxPerBeat, y2: H, class: "roll-bar"
+      }));
+    }
+
+    var noteNodes = [];
+    piece.notes.forEach(function (n) {
+      var row = n.midi - range.startMidi;
+      var rect = mk("rect", {
+        x: n.start * pxPerBeat + 0.5,
+        y: H - (row + 1) * rowH + 0.5,
+        width: Math.max(2, n.dur * pxPerBeat - 1),
+        height: rowH - 1,
+        rx: 2,
+        class: "roll-note roll-note--" + (n.hand || "right")
+      });
+      svg.appendChild(rect);
+      noteNodes.push({ note: n, el: rect });
+    });
+
+    var cursor = mk("line", { x1: 0, y1: 0, x2: 0, y2: H, class: "roll-cursor" });
+    svg.appendChild(cursor);
+
+    svg.moveCursor = function (beat) {
+      cursor.setAttribute("x1", beat * pxPerBeat);
+      cursor.setAttribute("x2", beat * pxPerBeat);
+    };
+    svg.noteNodes = noteNodes;
+    return svg;
+  }
+
+  /** Monta o bloco completo: cabecalho, roll, teclado e controles. */
+  function playerBlock(piece, opts) {
+    opts = opts || {};
+    var wrap = h("div", "widget-card player");
+    if (!piece || !piece.notes.length) {
+      wrap.appendChild(h("div", "warn", "Nada para tocar."));
+      return wrap;
+    }
+    var range = noteRange(piece.notes);
+
+    var head = h("div", "player-head");
+    head.appendChild(h("h4", null, piece.title));
+    var meta = h("div", "scale-meta");
+    var ex = piece.exercise;
+    if (ex) {
+      meta.appendChild(h("span", "tag tag--" + (ex.source === "hanon" ? "blues" : "simetrica"),
+        ex.source === "hanon" ? "Hanon" : "derivado"));
+    }
+    meta.appendChild(h("span", "mono", piece.notes.length + " notas"));
+    meta.appendChild(h("span", "mono", T.midiToName(range.lo) + "–" + T.midiToName(range.hi)));
+    head.appendChild(meta);
+    wrap.appendChild(head);
+
+    var rollBox = h("div", "roll-box");
+    var roll = pianoRoll(piece, range);
+    rollBox.appendChild(roll);
+    wrap.appendChild(rollBox);
+
+    var kbBox = h("div", "kb-box");
+    wrap.appendChild(kbBox);
+    var kb = KB.render(kbBox, {
+      startMidi: range.startMidi,
+      octaves: range.octaves,
+      labels: "none",
+      whiteWidth: 26,
+      whiteHeight: 96
+    });
+
+    /* --- controles --- */
+    var bar = h("div", "player-bar");
+    var handSel = h("select", "sel sel--mini");
+    [["both", "Duas maos"], ["right", "So direita"], ["left", "So esquerda"]]
+      .forEach(function (o) {
+        var op = h("option", null, o[1]);
+        op.value = o[0];
+        handSel.appendChild(op);
+      });
+
+    var tempo = h("input", "dock-range");
+    tempo.type = "range";
+    tempo.min = 40; tempo.max = 160; tempo.value = piece.bpm;
+    var tempoLabel = h("span", "dock-value", piece.bpm + " bpm");
+    tempo.addEventListener("input", function () {
+      tempoLabel.textContent = tempo.value + " bpm";
+    });
+
+    var handle = null;
+    var raf = null;
+
+    function stop() {
+      if (handle) { handle.stop(); handle = null; }
+      if (raf) { cancelAnimationFrame(raf); raf = null; }
+      roll.moveCursor(0);
+      playBtn.textContent = "▶ Tocar";
+      playBtn.classList.remove("btn--done");
+      Array.prototype.forEach.call(kbBox.querySelectorAll(".is-playing"), function (el) {
+        el.classList.remove("is-playing");
+      });
+    }
+
+    var playBtn = btn("▶ Tocar", function () {
+      if (handle) { stop(); return; }
+      var hands = handSel.value === "both" ? null : [handSel.value];
+      var bpm = parseInt(tempo.value, 10);
+      var t0 = performance.now();
+      handle = A.playTimeline(piece.notes, {
+        bpm: bpm,
+        hands: hands,
+        onNote: function (n) { if (kb.flash) kb.flash(n.midi); },
+        onEnd: stop
+      });
+      playBtn.textContent = "■ Parar";
+      playBtn.classList.add("btn--done");
+      (function tick() {
+        var beat = ((performance.now() - t0) / 1000) * (bpm / 60);
+        roll.moveCursor(Math.min(beat, piece.beats));
+        if (handle) raf = requestAnimationFrame(tick);
+      })();
+    }, "btn--primary");
+
+    bar.appendChild(playBtn);
+    bar.appendChild(handSel);
+    bar.appendChild(tempo);
+    bar.appendChild(tempoLabel);
+    wrap.appendChild(bar);
+
+    if (ex && ex.why) wrap.appendChild(h("p", "scale-why", "<strong>Para que serve:</strong> " + ex.why));
+    if (ex && ex.focus) wrap.appendChild(h("p", "scale-uses", "<strong>Foco:</strong> " + ex.focus));
+    if (ex && ex.source === "derivado") {
+      wrap.appendChild(h("p", "fig-caption",
+        "Gerado a partir do motor teorico — nao e transcricao de nenhuma edicao."));
+    }
+    return wrap;
+  }
+
+  /** data-w="exercise" — exercicio generativo em qualquer tonalidade. */
+  W.exercise = function (node) {
+    var id = node.dataset.ex;
+    var ex = global.PT.exercises && global.PT.exercises.get(id);
+    if (!ex) return h("div", "warn", "Exercicio desconhecido: " + id);
+
+    var wrap = h("div", "exercise-wrap");
+    var controls = h("div", "controls");
+
+    var tonicSel = h("select", "sel");
+    ["C", "G", "D", "A", "E", "B", "F#", "Db", "Ab", "Eb", "Bb", "F"].forEach(function (n) {
+      var o = h("option", null, T.noteName(T.parseNote(n)));
+      o.value = n;
+      tonicSel.appendChild(o);
+    });
+    tonicSel.value = node.dataset.tonic || "C";
+
+    var scaleSel = h("select", "sel");
+    ["jonio", "eolio", "menor-harmonica", "menor-melodica", "dorico", "mixolidio"]
+      .forEach(function (id2) {
+        var s = T.getScale(id2);
+        var o = h("option", null, s.name);
+        o.value = id2;
+        scaleSel.appendChild(o);
+      });
+    scaleSel.value = node.dataset.scale || "jonio";
+
+    controls.appendChild(labelledField("Tonalidade", tonicSel));
+    controls.appendChild(labelledField("Escala", scaleSel));
+    wrap.appendChild(controls);
+
+    var out = h("div");
+    wrap.appendChild(out);
+
+    function draw() {
+      out.innerHTML = "";
+      var piece = global.PT.exercises.generate(id, {
+        tonic: tonicSel.value,
+        scale: scaleSel.value
+      });
+      out.appendChild(playerBlock(piece));
+    }
+    tonicSel.addEventListener("change", draw);
+    scaleSel.addEventListener("change", draw);
+    draw();
+    return wrap;
+  };
+
+  /** data-w="piece" — peca com notas ja prontas (JSON embutido no pack). */
+  W.piece = function (node) {
+    var raw = node.getAttribute("data-piece");
+    var piece;
+    try {
+      piece = JSON.parse(raw);
+    } catch (e) {
+      return h("div", "warn", "JSON de peca invalido.");
+    }
+    piece.beats = piece.notes.reduce(function (m, n) {
+      return Math.max(m, n.start + n.dur);
+    }, 0);
+    return playerBlock(piece);
+  };
+
+  function labelledField(text, el) {
+    var l = h("label", "field");
+    l.appendChild(h("span", "field-label", text));
+    l.appendChild(el);
+    return l;
+  }
+
+  /* ------------------------------------------------------------------ *
    * Hidratacao
    * ------------------------------------------------------------------ */
 

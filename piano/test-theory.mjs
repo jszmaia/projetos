@@ -4,7 +4,7 @@
  * Valida que as escalas, acordes, grafias e numeros fisicos batem com a
  * teoria — se algum valor do material estiver errado, isso quebra aqui.
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import vm from "node:vm";
@@ -15,10 +15,15 @@ sandbox.window = sandbox;
 sandbox.globalThis = sandbox;
 vm.createContext(sandbox);
 vm.runInContext(readFileSync(join(DIR, "js/theory.js"), "utf8"), sandbox);
+vm.runInContext(readFileSync(join(DIR, "js/exercises.js"), "utf8"), sandbox);
 vm.runInContext(readFileSync(join(DIR, "js/curriculum-a.js"), "utf8"), sandbox);
 vm.runInContext(readFileSync(join(DIR, "js/curriculum-b.js"), "utf8"), sandbox);
+for (const f of readdirSync(join(DIR, "js")).filter((f) => f.startsWith("pack-")).sort()) {
+  vm.runInContext(readFileSync(join(DIR, "js", f), "utf8"), sandbox);
+}
 
 const T = sandbox.PT.theory;
+const EX = sandbox.PT.exercises;
 const CURRICULUM = sandbox.PT.CURRICULUM;
 
 let pass = 0;
@@ -250,8 +255,122 @@ CURRICULUM.forEach((m) => {
   });
 });
 
-eq("modulos", CURRICULUM.length, 19);
+/* Piso, nao igualdade: cada content pack novo acrescenta modulos. */
+ok("pelo menos 19 modulos", CURRICULUM.length >= 19, "modulos = " + CURRICULUM.length);
 ok("mais de 40 licoes", lessonCount >= 40, "licoes = " + lessonCount);
+
+/* --- 11. Niveis renderizaveis -------------------------------------- */
+
+/*
+ * viewCurso() derivava os niveis de uma lista fixa; um pack com nivel novo
+ * sumia da tela sem erro. Aqui garantimos que a lista fixa acabou e que todo
+ * nivel presente nos dados tem como ser exibido.
+ */
+const appSrc = readFileSync(join(DIR, "js/app.js"), "utf8");
+ok("app.js nao tem mais a lista de niveis fixa dentro de viewCurso",
+  !/var levels = \["Iniciante", "Intermediario", "Avancado"\]/.test(appSrc));
+ok("app.js deriva os niveis dos dados", /function orderedLevels\(/.test(appSrc));
+ok("app.js ordena modulos por `order`", /function modulesOfLevel\(/.test(appSrc));
+
+const levels = [...new Set(CURRICULUM.map((m) => m.level))];
+levels.forEach((lv) => {
+  ok("nivel e string nao vazia: " + lv, typeof lv === "string" && lv.length > 0);
+});
+const cssSrc = readFileSync(join(DIR, "styles.css"), "utf8");
+levels.forEach((lv) => {
+  const known = ["Iniciante", "Intermediario", "Avancado"].indexOf(lv);
+  const cls = known >= 0 ? known + 1 : 4;
+  ok("existe cor de pilula para o nivel " + lv, cssSrc.includes(".pill--" + cls));
+});
+
+/* --- 12. Listas de script em sincronia ------------------------------ */
+
+const indexSrc = readFileSync(join(DIR, "index.html"), "utf8");
+const indexScripts = [...indexSrc.matchAll(/<script\s+src="\.\/([^"]+)"><\/script>/g)]
+  .map((m) => m[1]);
+ok("index.html lista scripts", indexScripts.length >= 7, "achou " + indexScripts.length);
+indexScripts.forEach((f) => {
+  ok("script referenciado existe: " + f, existsSync(join(DIR, f)));
+});
+const bundlerSrc = readFileSync(join(DIR, "build-single.mjs"), "utf8");
+ok("build-single.mjs deriva a lista do index.html (sem lista paralela)",
+  /scriptsFromIndex/.test(bundlerSrc) && !/^\s*"js\/theory\.js",/m.test(bundlerSrc));
+
+/* Ordem de carga: theory antes de tudo; app.js por ultimo; packs antes de widgets. */
+eq("theory.js carrega primeiro", indexScripts[0], "js/theory.js");
+eq("app.js carrega por ultimo", indexScripts[indexScripts.length - 1], "js/app.js");
+ok("exercises.js carrega antes de widgets.js",
+  indexScripts.indexOf("js/exercises.js") < indexScripts.indexOf("js/widgets.js"));
+indexScripts.filter((f) => f.startsWith("js/pack-")).forEach((p) => {
+  ok("pack carrega antes de app.js: " + p,
+    indexScripts.indexOf(p) < indexScripts.indexOf("js/app.js"));
+});
+
+/* --- 13. Exercicios generativos ------------------------------------ */
+
+/*
+ * A asserção que sustenta a decisao de arquitetura: se o Hanon nº 1 nao sair
+ * identico ao texto impresso, a premissa "exercicios sao regras, nao dados"
+ * esta errada e o modulo inteiro precisa ser repensado.
+ */
+const HANON_1 = ["C4", "E4", "F4", "G4", "A4", "G4", "F4", "E4",
+                 "D4", "F4", "G4", "A4", "B4", "A4", "G4", "F4"];
+const h1 = EX.generate("hanon-1", { tonic: "C" });
+const h1right = h1.notes.filter((n) => n.hand === "right");
+eq("Hanon nº 1 reproduz o texto impresso",
+  h1right.slice(0, 16).map((n) => T.midiToName(n.midi)), HANON_1);
+eq("Hanon nº 1: dedilhado da figura", h1.exercise.fingering, [1, 2, 3, 4, 5, 4, 3, 2]);
+ok("Hanon nº 1 tem as duas maos",
+  h1.notes.some((n) => n.hand === "left") && h1right.length > 0);
+eq("Hanon nº 1: maos em oitavas paralelas",
+  h1right[0].midi - h1.notes.filter((n) => n.hand === "left")[0].midi, 12);
+
+/* Transposicao: a figura mantem a forma em graus, em qualquer tonalidade. */
+TONICS.forEach((tonic) => {
+  const g = EX.generate("hanon-1", { tonic });
+  const rh = g.notes.filter((n) => n.hand === "right");
+  const built = T.buildScale(tonic, "jonio");
+  ok("Hanon nº 1 comeca na tonica em " + tonic,
+    T.mod(rh[0].midi, 12) === built.tonic.pc);
+  ok("Hanon nº 1 usa so notas da escala em " + tonic,
+    rh.every((n) => built.pcs.includes(T.mod(n.midi, 12))));
+});
+
+/* Todo exercicio do catalogo deve gerar notas validas em toda tonalidade. */
+EX.EXERCISES.forEach((ex) => {
+  ok("exercicio declara proveniencia: " + ex.id,
+    ex.source === "hanon" || ex.source === "derivado");
+  TONICS.forEach((tonic) => {
+    const g = EX.generate(ex.id, { tonic });
+    ok("gera notas: " + ex.id + " em " + tonic, g && g.notes.length > 0);
+    ok("MIDI dentro do piano de 88 teclas: " + ex.id + " em " + tonic,
+      g.notes.every((n) => n.midi >= 21 && n.midi <= 108));
+    ok("start >= 0 e dur > 0: " + ex.id + " em " + tonic,
+      g.notes.every((n) => n.start >= 0 && n.dur > 0));
+    ok("mao valida: " + ex.id + " em " + tonic,
+      g.notes.every((n) => n.hand === "right" || n.hand === "left"));
+  });
+});
+
+/* --- 14. Diretivas de widget nos packs ------------------------------ */
+
+const packFiles = readdirSync(join(DIR, "js")).filter((f) => f.startsWith("pack-"));
+ok("existe ao menos um content pack compilado", packFiles.length >= 1);
+
+/* Toda diretiva ::exercise tem de apontar para um exercicio que existe. */
+let exRefs = 0;
+CURRICULUM.forEach((m) => {
+  m.lessons.forEach((l) => {
+    for (const mt of l.html.matchAll(/data-ex="([a-z0-9-]+)"/g)) {
+      exRefs++;
+      ok("exercicio citado existe (" + l.id + "): " + mt[1], !!EX.get(mt[1]));
+    }
+  });
+});
+ok("as licoes referenciam exercicios", exRefs >= 5, "referencias = " + exRefs);
+CURRICULUM.filter((m) => m.order !== undefined).forEach((m) => {
+  ok("order e numero: " + m.id, typeof m.order === "number");
+});
 
 /* --- Resultado ------------------------------------------------------- */
 
