@@ -1,0 +1,11 @@
+{
+  "name": "piano-teoria",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Curso de piano e teoria musical, do iniciante ao avancado, sem dependencias.",
+  "scripts": {
+    "start": "node serve.mjs",
+    "test": "node test-theory.mjs"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "b3-bolsa-monitor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Painel de mercado brasileiro e global (B3 + Yahoo Finance via RapidAPI).",
+  "scripts": {
+    "start": "node server.mjs"
+  }
+}

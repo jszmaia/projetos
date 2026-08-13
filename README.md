@@ -1,41 +1,42 @@
-> Este repositorio hospeda dois aplicativos independentes: o **B3 Bolsa Monitor** (abaixo) e o
-> **[Piano Teoria](piano/README.md)** — curso de piano e teoria musical (`npm run piano`).
+# projetos
 
-# B3 Bolsa Monitor
+Dois aplicativos independentes, cada um autocontido em sua propria pasta. Eles nao compartilham
+codigo, dependencias nem configuracao — voce pode trabalhar em um sem tocar no outro.
 
-Painel de mercado brasileiro e global. A B3 e a fonte oficial para dados de indices e componentes brasileiros. Para mercados globais, detalhes de ativos, noticias e graficos, o app usa a assinatura **Yahoo Finance via RapidAPI**.
+| Pasta | Projeto | O que e | Como rodar |
+|---|---|---|---|
+| [`b3/`](b3/README.md) | **B3 Bolsa Monitor** | Painel de mercado brasileiro e global, com dados da B3 e do Yahoo Finance via RapidAPI. Exige uma chave de API. | `npm run b3` → `http://localhost:4173` |
+| [`piano/`](piano/README.md) | **Piano Teoria** | Curso de piano e teoria musical, do iniciante ao avancado. Sem dependencias, sem build, sem rede. | `npm run piano` → `http://localhost:4180` |
 
-## Como a chave funciona
+Cada pasta tambem tem seu proprio `package.json`, entao voce pode entrar nela e rodar direto:
 
-O Yahoo Finance nao disponibiliza uma API publica oficial para esse uso. Por isso, o projeto integra a API hospedada pela RapidAPI. Cada pessoa que executar sua propria copia do aplicativo deve criar uma conta na RapidAPI, assinar o produto correspondente e usar a propria chave. Os planos possuem limites e precos definidos pela RapidAPI.
-
-1. Crie uma conta em [RapidAPI](https://rapidapi.com/).
-2. Assine a API `Yahoo Finance` cujo host seja `apidojo-yahoo-finance-v1.p.rapidapi.com`.
-3. Copie a chave apresentada nos exemplos da RapidAPI.
-4. Crie um arquivo chamado `.env` ao lado deste README, com base em `.env.example`.
-5. Inicie com `npm start` e abra `http://localhost:4173`.
-
-Se a RapidAPI retornar `403` com a mensagem `You are not subscribed to this API`, a chave esta correta, mas a conta ainda nao foi aprovada ou inscrita no produto. Volte a pagina da API na RapidAPI e ative um plano para o host acima; criar a conta ou enviar uma solicitacao, por si so, nao libera as consultas.
-
-Exemplo de configuracao (nao use uma chave real em arquivos versionados):
-
-```env
-RAPIDAPI_KEY=sua_chave_privada
-RAPIDAPI_HOST=apidojo-yahoo-finance-v1.p.rapidapi.com
+```bash
+cd b3    && npm start     # painel da B3
+cd piano && npm start     # app de piano
+cd piano && npm test      # testes do motor teorico
 ```
 
-O servidor le o `.env` ao iniciar. Em hospedagem, prefira configurar `RAPIDAPI_KEY` como variavel de ambiente do provedor; ela substitui o valor do arquivo local.
+## Estrutura
 
-## Seguranca da chave
+```
+.
+├── b3/        painel de mercado — servidor Node + frontend estatico
+│   ├── server.mjs        API + arquivos estaticos (le b3/.env)
+│   ├── index.html app.js styles.css
+│   └── .env.example      modelo da chave da RapidAPI
+│
+└── piano/     curso de piano — 100% estatico
+    ├── index.html styles.css
+    ├── serve.mjs         servidor estatico opcional
+    ├── test-theory.mjs   891 assercoes sobre o motor teorico
+    └── js/               motor teorico, teclado SVG, audio, curriculo
+```
 
-- O `.env` esta no `.gitignore` e nao deve ser enviado para GitHub, compartilhado ou colocado no frontend.
-- A chave fica somente no servidor: o navegador chama as rotas locais do aplicativo e nunca recebe o valor da credencial.
-- Caso uma chave seja publicada por engano, revogue ou gere outra no painel da RapidAPI.
+## Diferencas importantes entre os dois
 
-## Sem RapidAPI
+- **b3/** precisa de rede e de uma chave da RapidAPI configurada em `b3/.env`
+  (veja `b3/.env.example`). Sem a chave, o painel ainda mostra os dados oficiais da B3.
+- **piano/** nao precisa de nada: funciona ate abrindo `piano/index.html` direto no navegador,
+  pelo protocolo `file://`.
 
-O painel continua mostrando a B3 e seus componentes oficiais. Os recursos Yahoo aparecem como indisponiveis ate que uma chave seja configurada.
-
-## Fontes e limites
-
-Dados de mercado podem ter atraso, limites de requisicao ou cobertura variavel conforme o plano contratado. O aplicativo e um monitor informativo e nao constitui recomendacao de investimento.
+O arquivo `.env` esta no `.gitignore` e nunca deve ser versionado.

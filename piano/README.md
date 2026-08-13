@@ -13,7 +13,9 @@ Duas formas, ambas sem instalar nada:
 
 ```bash
 # 1. servidor local
-npm run piano          # abre em http://localhost:4180
+npm start              # de dentro desta pasta
+npm run piano          # ou, da raiz do repositorio
+# abre em http://localhost:4180
 
 # 2. direto no navegador
 # basta abrir piano/index.html — os scripts sao classicos, nao modulos ES,
@@ -92,7 +94,8 @@ Sol♯ fica centrado, Re♯ e La♯ ficam a direita. Todos os diagramas usam ess
 ## Testes
 
 ```bash
-node piano/test-theory.mjs
+npm test                      # de dentro desta pasta
+node piano/test-theory.mjs    # ou, da raiz do repositorio
 ```
 
 Verifica que os passos de toda escala somam 12, que toda escala de 7 notas usa cada letra uma
