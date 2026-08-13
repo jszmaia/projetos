@@ -1,3 +1,6 @@
+> Este repositorio hospeda dois aplicativos independentes: o **B3 Bolsa Monitor** (abaixo) e o
+> **[Piano Teoria](piano/README.md)** — curso de piano e teoria musical (`npm run piano`).
+
 # B3 Bolsa Monitor
 
 Painel de mercado brasileiro e global. A B3 e a fonte oficial para dados de indices e componentes brasileiros. Para mercados globais, detalhes de ativos, noticias e graficos, o app usa a assinatura **Yahoo Finance via RapidAPI**.
