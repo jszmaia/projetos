@@ -690,3 +690,97 @@ h5 { font-size: .86rem; margin: 0 0 8px; }
   word-break: break-word;
   font-size: .85rem;
 }
+
+/* ---------------------------------------------------------------- *
+ * Pauta (js/staff.js)
+ * Segue as mesmas variaveis do resto do app, entao acompanha o tema
+ * claro/escuro sem regra propria de cor.
+ * ---------------------------------------------------------------- */
+.st-box { margin: 12px 0; overflow-x: auto; }
+.st { width: 100%; max-width: 720px; height: auto; display: block; }
+.st-box--small .st { max-width: 380px; }
+
+.st-line,
+.st-ledger {
+  stroke: var(--text);
+  stroke-width: 1;
+  opacity: .75;
+}
+
+.st-clef-shape {
+  fill: var(--text);
+  stroke: var(--text);
+  stroke-width: .8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.st-clef-dot,
+.st-clef-fill { fill: var(--text); stroke: none; }
+
+/* Os tracos da clave sao curvas abertas com espessura, nao areas fechadas. */
+.st-clef-stroke {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.st-clef--sol .st-clef-shape {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.st-head {
+  fill: var(--text);
+  stroke: none;
+}
+.st-head--open {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2.2;
+}
+
+.st-stem {
+  stroke: var(--text);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.st-flag {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.st-dot { fill: var(--text); }
+
+.st-acc-stroke {
+  stroke: var(--text);
+  stroke-linecap: round;
+}
+.st-acc-bowl {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.4;
+}
+
+.st-name {
+  fill: var(--muted);
+  font: 500 9px var(--font, system-ui, sans-serif);
+}
+
+/* Nota tocando: mesmo ambar que o teclado usa, para os dois lerem juntos. */
+.st-note--on .st-head,
+.st-note--active .st-head {
+  fill: var(--amber);
+  stroke: var(--amber);
+}
+.st-note--on .st-stem,
+.st-note--active .st-stem,
+.st-note--on .st-flag,
+.st-note--active .st-flag {
+  stroke: var(--amber);
+}
+.st-note--active .st-head--open { fill: none; }

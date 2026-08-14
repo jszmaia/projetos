@@ -15,6 +15,7 @@ sandbox.window = sandbox;
 sandbox.globalThis = sandbox;
 vm.createContext(sandbox);
 vm.runInContext(readFileSync(join(DIR, "js/theory.js"), "utf8"), sandbox);
+vm.runInContext(readFileSync(join(DIR, "js/staff.js"), "utf8"), sandbox);
 vm.runInContext(readFileSync(join(DIR, "js/exercises.js"), "utf8"), sandbox);
 vm.runInContext(readFileSync(join(DIR, "js/curriculum-a.js"), "utf8"), sandbox);
 vm.runInContext(readFileSync(join(DIR, "js/curriculum-b.js"), "utf8"), sandbox);
@@ -23,6 +24,7 @@ for (const f of readdirSync(join(DIR, "js")).filter((f) => f.startsWith("pack-")
 }
 
 const T = sandbox.PT.theory;
+const ST = sandbox.PT.staff;
 const EX = sandbox.PT.exercises;
 const CURRICULUM = sandbox.PT.CURRICULUM;
 
@@ -41,6 +43,69 @@ function eq(name, actual, expected) {
 function near(name, actual, expected, tol) {
   ok(name, Math.abs(actual - expected) <= tol,
     "recebido " + actual + ", esperado ~" + expected);
+}
+
+/* --- 0. Pauta: a posicao vertical vem da GRAFIA, nao do MIDI --------- *
+ *
+ * Esta e a assercao que sustenta o desenho do modulo de pauta, o mesmo
+ * papel que a comparacao literal do Hanon nº 1 tem para os exercicios: se
+ * ela falhar, a premissa esta errada e nao adianta ajustar o resto.
+ */
+
+/* Indice diatonico conta LETRAS. A alteracao nao entra. */
+eq("indice diatonico de C4", ST.diatonicIndex("C", 4), 28);
+eq("indice diatonico de B3", ST.diatonicIndex("B", 3), 27);
+eq("indice diatonico de C5", ST.diatonicIndex("C", 5), 35);
+
+/* Enarmonia: mesma tecla, linhas diferentes. */
+{
+  const fs = ST.parseNote("F#4"), gb = ST.parseNote("Gb4");
+  ok("Fa#4 e Solb4 sao a mesma tecla", fs.midi === gb.midi,
+     "midi " + fs.midi + " vs " + gb.midi);
+  ok("Fa#4 e Solb4 ocupam linhas DIFERENTES", fs.dia !== gb.dia,
+     "dia " + fs.dia + " vs " + gb.dia);
+}
+
+/* A oitava escrita pertence a letra, mesmo quando o som cruza a fronteira. */
+{
+  const bs = ST.parseNote("B#3"), cb = ST.parseNote("Cb4");
+  eq("Si#3 fica na oitava 3 da pauta", bs.dia, ST.diatonicIndex("B", 3));
+  eq("Si#3 soa como Do4", bs.midi, 60);
+  eq("Dob4 fica na oitava 4 da pauta", cb.dia, ST.diatonicIndex("C", 4));
+  eq("Dob4 soa como Si3", cb.midi, 59);
+}
+
+/* Ida e volta: toda nota grafada volta a mesma letra e oitava. */
+for (const letra of ["C", "D", "E", "F", "G", "A", "B"]) {
+  for (const acc of ["", "#", "b"]) {
+    for (let oct = 1; oct <= 7; oct++) {
+      const p = ST.parseNote(letra + acc + oct);
+      ok("ida e volta na pauta: " + letra + acc + oct,
+         p && p.letter === letra && p.oct === oct &&
+         p.dia === ST.diatonicIndex(letra, oct),
+         JSON.stringify(p));
+    }
+  }
+}
+
+/* Toda nota das 88 teclas cai numa posicao de pauta valida. */
+for (let midi = 21; midi <= 108; midi++) {
+  const p = ST.parseNote(T.midiToName(midi));
+  ok("pauta cobre MIDI " + midi, p !== null && p.midi === midi,
+     p ? "midi " + p.midi : "nao parseou");
+}
+
+/* A armadura desenhada usa as mesmas notas que keySignature declara. */
+for (const tonica of ["C", "G", "D", "A", "E", "B", "F", "Bb", "Eb", "Ab", "Db"]) {
+  const sig = T.keySignature(tonica);
+  for (const clave of ["sol", "fa"]) {
+    sig.order.forEach((nome) => {
+      const letra = String(nome)[0].toUpperCase();
+      const oct = ST.keyAccidentalOctave(letra, clave, sig.type);
+      ok("armadura de " + tonica + " em clave de " + clave + ": " + letra + " tem oitava",
+         typeof oct === "number" && oct >= 0 && oct <= 8, String(oct));
+    });
+  }
 }
 
 /* --- 1. Estrutura das escalas --------------------------------------- */

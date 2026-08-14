@@ -2298,6 +2298,127 @@
   }
 
   /* ------------------------------------------------------------------ *
+   * Pauta
+   * ------------------------------------------------------------------ */
+
+  var ST = global.PT.staff;
+
+  /* Monta a lista de notas de um widget de pauta.
+   * Aceita tres formas, nesta ordem de precedencia:
+   *   data-notes="C4 E4 G4"        notas grafadas literais
+   *   data-scale + data-tonic      gera a escala e usa a GRAFIA dela
+   *   data-chord + data-root       gera o acorde
+   * A grafia importa: e ela que decide a linha da pauta. */
+  function staffNotes(node) {
+    var raw = node.dataset.notes;
+    if (raw) return raw.trim().split(/\s+/);
+
+    var oct = parseInt(node.dataset.oct, 10);
+    if (isNaN(oct)) oct = 4;
+
+    if (node.dataset.scale) {
+      var built = T.buildScale(node.dataset.tonic || "C", node.dataset.scale);
+      if (!built) return [];
+      // Sobe a oitava quando a letra "da a volta" (ex.: Sol -> La -> Do).
+      var out = [], prev = -1;
+      built.notes.forEach(function (n) {
+        var li = ST.diatonicIndex(n.letter, 0);
+        if (prev >= 0 && li <= prev) oct++;
+        prev = li;
+        out.push({ letter: n.letter, acc: n.acc, oct: oct });
+      });
+      if (node.dataset.octave !== "no") {
+        out.push({ letter: built.notes[0].letter, acc: built.notes[0].acc, oct: oct + 1 });
+      }
+      return out;
+    }
+
+    if (node.dataset.chord) {
+      var ch = T.buildChord(node.dataset.root || "C", node.dataset.chord);
+      if (!ch) return [];
+      var o2 = oct, p2 = -1;
+      return ch.notes.map(function (n) {
+        var li = ST.diatonicIndex(n.letter, 0);
+        if (p2 >= 0 && li <= p2) o2++;
+        p2 = li;
+        return { letter: n.letter, acc: n.acc, oct: o2 };
+      });
+    }
+    return [];
+  }
+
+  /* Pauta estatica. */
+  W["staff"] = function (node) {
+    if (!ST) return h("div", "warn", "Modulo de pauta ausente.");
+    var notes = staffNotes(node);
+    if (!notes.length) return h("div", "warn", "Nada para desenhar na pauta.");
+
+    var box = h("div", "st-box" + (node.dataset.small === "1" ? " st-box--small" : ""));
+    ST.render(box, notes, {
+      clef: node.dataset.clef || "sol",
+      key: node.dataset.key || null,
+      showNames: node.dataset.names === "1",
+      ariaLabel: node.dataset.label || null
+    });
+    if (node.dataset.caption) box.appendChild(caption(node.dataset.caption));
+    return box;
+  };
+
+  /* Pauta + teclado, tocando juntos: a nota acende nos dois ao mesmo tempo.
+   * E o widget que liga notacao a som, que e o ponto do modulo de leitura. */
+  W["staff-play"] = function (node) {
+    if (!ST) return h("div", "warn", "Modulo de pauta ausente.");
+    var notes = staffNotes(node);
+    if (!notes.length) return h("div", "warn", "Nada para tocar.");
+
+    var parsed = notes.map(function (n) { return ST.parseNote(n); }).filter(Boolean);
+    var wrap = h("div", "staff-play");
+
+    var stBox = h("div", "st-box");
+    var svg = ST.render(stBox, notes, {
+      clef: node.dataset.clef || "sol",
+      key: node.dataset.key || null,
+      showNames: node.dataset.names !== "0"
+    });
+    wrap.appendChild(stBox);
+
+    var kbBox = h("div", "kb-box");
+    var lowest = Math.min.apply(null, parsed.map(function (p) { return p.midi; }));
+    var startMidi = Math.floor(lowest / 12) * 12;
+    var kb = KB.render(kbBox, {
+      startMidi: startMidi,
+      octaves: 2,
+      highlights: parsed.map(function (p) { return { midi: p.midi }; })
+    });
+    wrap.appendChild(kbBox);
+
+    var bpm = parseInt(node.dataset.bpm, 10) || 84;
+    var timeline = parsed.map(function (p, i) {
+      return { midi: p.midi, start: i, dur: 1 };
+    });
+
+    var controls = h("div", "row");
+    var handle = null;
+    controls.appendChild(btn("▶ Tocar", function () {
+      if (handle && handle.stop) handle.stop();
+      handle = A.playTimeline(timeline, {
+        bpm: bpm,
+        onNote: function (n) {
+          var i = timeline.indexOf(n);
+          svg.setActive(i);
+          if (kb.flash) kb.flash(n.midi);
+        }
+      });
+      setTimeout(function () { svg.setActive(-1); },
+        (timeline.length / (bpm / 60)) * 1000 + 400);
+    }));
+    wrap.appendChild(controls);
+
+    if (node.dataset.caption) wrap.appendChild(caption(node.dataset.caption));
+    return wrap;
+  };
+
+  /* ------------------------------------------------------------------ *
    * Hidratacao
    * ------------------------------------------------------------------ */
 
