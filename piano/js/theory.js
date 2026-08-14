@@ -116,11 +116,21 @@
     return pcName(mod(midi, 12), preferFlats) + (Math.floor(midi / 12) - 1);
   }
 
+  /**
+   * Nome grafado + oitava -> numero MIDI.
+   *
+   * A altura sai da LETRA mais a alteracao, sem reduzir a classe de altura.
+   * Reduzir seria errado justamente onde a alteracao cruza a fronteira da
+   * oitava: Si♯3 e a mesma tecla que Do4 (60), e Do♭4 e a mesma que Si3 (59).
+   * Com `mod`, Si♯3 caia em 48 e Do♭4 em 71 — uma oitava fora nos dois casos.
+   * A oitava escrita pertence a letra, nao ao som resultante.
+   */
   function nameToMidi(text) {
-    var m = String(text).trim().match(/^([A-Ga-g])([#b♯♭]*)(-?\d+)$/);
+    var m = String(text).trim().match(/^([A-Ga-g])([#b♯♭xX\u{1D12A}]*)(-?\d+)$/u);
     if (!m) return null;
     var n = parseNote(m[1] + m[2]);
-    return (parseInt(m[3], 10) + 1) * 12 + n.pc;
+    if (!n) return null;
+    return (parseInt(m[3], 10) + 1) * 12 + LETTER_PC[n.letter] + n.acc;
   }
 
   /** Harmonico n em relacao ao fundamental: razao n/1, reduzida a uma oitava. */

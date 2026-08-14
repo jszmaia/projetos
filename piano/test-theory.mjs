@@ -137,6 +137,25 @@ eq("nome de nota MIDI 69", T.midiToName(69), "A4");
 eq("MIDI de C4", T.nameToMidi("C4"), 60);
 eq("MIDI de F#3", T.nameToMidi("F#3"), 54);
 
+/* A oitava escrita pertence a LETRA, nao a classe de altura resultante.
+ * Si♯3 soa como Do4 e Do♭4 soa como Si3 — mas a letra manda na oitava.
+ * Reduzir a classe de altura com `mod` errava uma oitava inteira nestes dois
+ * casos, e Si♯/Do♭ ocorrem 108 vezes nas escalas que o app gera (por exemplo
+ * Do♯ menor harmonica: C♯ D♯ E F♯ G♯ A B♯). Chegava na calculadora de
+ * frequencia do laboratorio como uma oitava errada. */
+eq("MIDI de B#3 (mesma tecla que C4)", T.nameToMidi("B#3"), 60);
+eq("MIDI de Cb4 (mesma tecla que B3)", T.nameToMidi("Cb4"), 59);
+eq("MIDI de E#4 (nao cruza a oitava)", T.nameToMidi("E#4"), 65);
+eq("MIDI de Fb4 (nao cruza a oitava)", T.nameToMidi("Fb4"), 64);
+eq("MIDI de Cbb4 (alteracao dupla)", T.nameToMidi("Cbb4"), 58);
+eq("MIDI de B##3 (alteracao dupla)", T.nameToMidi("B##3"), 61);
+near("frequencia de B#3 e a de Do4", T.midiToFreq(T.nameToMidi("B#3")), 261.63, 0.01);
+
+/* Ida e volta em todo o teclado de 88 teclas, na grafia natural. */
+for (var mi = 21; mi <= 108; mi++) {
+  eq("ida e volta MIDI->nome->MIDI em " + mi, T.nameToMidi(T.midiToName(mi)), mi);
+}
+
 /* Batimento da terca maior temperada em Do4 (citado no modulo 3). */
 near("batimento da terca maior em Do4",
   Math.abs(4 * T.midiToFreq(64) - 5 * T.midiToFreq(60)), 10.4, 0.15);
