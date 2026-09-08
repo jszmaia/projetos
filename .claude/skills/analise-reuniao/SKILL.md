@@ -31,9 +31,10 @@ se a pessoa quer o documento — ela quer, todas as vezes.
   o `require('docx')` falhar.
 - Nome do arquivo: `Analise-Reuniao-<assunto-da-reuniao>.docx`, sem acentos e
   com hifens no lugar de espaços.
-- Salve no scratchpad da sessão e **envie com `SendUserFile`** (`status: normal`,
-  `display: attach`) para a Joyce baixar. Este ambiente roda em container remoto:
-  você não escreve no Desktop dela — o download acontece pelo card do arquivo.
+- Onde salvar: se estiver rodando na máquina da Joyce, grave em `analises/`
+  dentro da pasta do projeto e diga o caminho completo. Se estiver num container
+  remoto (Claude Code na web), grave no scratchpad e entregue com `SendUserFile`
+  (`status: normal`, `display: attach`) — de lá ela baixa pelo card.
 - Cabeçalho do documento: título da reunião, lista de participantes, duração se
   a transcrição informar.
 - Formatação: Heading 1 para os três blocos, Heading 2 para cada item dentro
