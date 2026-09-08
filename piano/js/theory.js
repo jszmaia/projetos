@@ -893,6 +893,53 @@
     };
   }
 
+  /*
+   * Cifra -> {root, chordId}.
+   *
+   * Os ids internos ("min", "maj7") nao sao como as pessoas escrevem acorde.
+   * Cifra real usa "Em", "F#m7", "Bb", "C°", "Amaj7" — e "m" sozinho, o
+   * sufixo mais comum de todos, nao batia com nenhum id. Este mapa e a
+   * ponte, e por isso e uma tabela: notacao de cifra e convencao humana,
+   * nao consequencia da teoria. O resto do motor continua calculando.
+   */
+  var SUFIXO_CIFRA = {
+    "": "maj", "M": "maj", "maj": "maj", "major": "maj",
+    "m": "min", "min": "min", "-": "min", "menor": "min",
+    "dim": "dim", "o": "dim", "\u00b0": "dim",
+    "aug": "aug", "+": "aug",
+    "\u00f8": "m7b5", "m7b5": "m7b5", "-7b5": "m7b5", "m7-5": "m7b5",
+    "\u0394": "maj7", "M7": "maj7", "maj7": "maj7",
+    "-7": "m7", "m7": "m7",
+    "sus": "sus4"
+  };
+
+  /**
+   * Le uma cifra como "Em", "F#m7", "Bbmaj7", "C\u00b0".
+   * Devolve null se nao reconhecer — quem chama decide o que fazer.
+   */
+  function parseChordSymbol(texto) {
+    var s = String(texto || "").trim();
+    var m = s.match(/^([A-Ga-g][#b\u266f\u266d]?)(.*)$/);
+    if (!m) return null;
+    var root = parseNote(m[1]);
+    if (!root) return null;
+
+    var sufixo = m[2].trim();
+    var id = SUFIXO_CIFRA[sufixo];
+    if (id === undefined) {
+      // Nao e alias: pode ja ser um id valido ("9", "13", "7alt", "add9").
+      id = getChord(sufixo) ? sufixo : null;
+    }
+    if (!id) return null;
+    return { root: root, chordId: id, symbol: s };
+  }
+
+  /** Cifra -> acorde construido, direto. */
+  function chordFromSymbol(texto) {
+    var p = parseChordSymbol(texto);
+    return p ? buildChord(p.root, p.chordId) : null;
+  }
+
   /** Circulo das quintas: 12 posicoes partindo de Do, andando de 7 semitons. */
   function circleOfFifths() {
     var majors = ["C", "G", "D", "A", "E", "B", "F#", "Db", "Ab", "Eb", "Bb", "F"];
@@ -950,6 +997,7 @@
     getScale: getScale, buildScale: buildScale, stepsToIntervals: stepsToIntervals,
     getChord: getChord, buildChord: buildChord, identifyChord: identifyChord,
     harmonize: harmonize, keySignature: keySignature, circleOfFifths: circleOfFifths,
+    parseChordSymbol: parseChordSymbol, chordFromSymbol: chordFromSymbol,
     scalesForChord: scalesForChord, compareScales: compareScales
   };
 })(typeof window !== "undefined" ? window : globalThis);

@@ -58,7 +58,7 @@ Navegadores bloqueiam audio ate haver interacao do usuario.
 └── piano/     curso de piano — 100% estatico
     ├── index.html styles.css
     ├── serve.mjs         servidor estatico opcional
-    ├── test-theory.mjs   1714 assercoes sobre o motor teorico
+    ├── test-theory.mjs   1733 assercoes sobre o motor teorico
     └── js/               motor teorico, teclado SVG, audio, curriculo
 ```
 

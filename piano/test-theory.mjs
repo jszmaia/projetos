@@ -192,6 +192,52 @@ eq("as tres formas de escrever Do4",
      JSON.stringify(r.notes.map((n) => n.midi)));
 }
 
+/* --- 0c. Cifra (parseChordSymbol / chordFromSymbol) ------------------ *
+ *
+ * Os ids internos ("min") nao sao como se escreve acorde ("Em"). O sufixo
+ * "m", o mais comum de todos em cifra, nao batia com id nenhum — entao
+ * "Em" e "F#m" nao eram reconhecidos, embora "Am7" fosse.
+ */
+eq("Em e menor", T.chordFromSymbol("Em").names, ["E", "G", "B"]);
+eq("F#m grafa certo", T.chordFromSymbol("F#m").names, ["F♯", "A", "C♯"]);
+eq("C maior sem sufixo", T.chordFromSymbol("C").names, ["C", "E", "G"]);
+eq("Bb usa bemol", T.chordFromSymbol("Bb").names, ["B♭", "D", "F"]);
+eq("Cmaj7", T.chordFromSymbol("Cmaj7").names, ["C", "E", "G", "B"]);
+eq("E7", T.chordFromSymbol("E7").names, ["E", "G♯", "B", "D"]);
+eq("Am7", T.chordFromSymbol("Am7").names, ["A", "C", "E", "G"]);
+ok("cifra invalida devolve null", T.chordFromSymbol("Xyz") === null);
+ok("string vazia devolve null", T.chordFromSymbol("") === null);
+
+/* Aliases equivalem aos ids que ja existiam. */
+for (const [cifra, id] of [["Em", "min"], ["C\u00b0", "dim"], ["G+", "aug"], ["A\u00f8", "m7b5"]]) {
+  const porCifra = T.chordFromSymbol(cifra);
+  const raiz = T.parseChordSymbol(cifra).root;
+  eq("cifra " + cifra + " = id " + id, porCifra.pcs, T.buildChord(raiz, id).pcs);
+}
+
+/* Cifra dentro da notacao em texto vira acorde tocavel. */
+{
+  const r = NOT.parse("LH: Em:4");
+  eq("Em na notacao gera 3 notas", r.notes.length, 3);
+  ok("todas juntas no tempo 0", r.notes.every((n) => n.start === 0 && n.dur === 4));
+  eq("empilhadas subindo", r.notes.map((n) => n.midi), [52, 55, 59]);
+}
+
+/* Nota e cifra se distinguem pela oitava. */
+{
+  const nota = NOT.parse("E4");
+  const cifra = NOT.parse("Em");
+  eq("E4 e uma nota so", nota.notes.length, 1);
+  eq("Em sao tres notas", cifra.notes.length, 3);
+}
+
+/* A esquerda soa abaixo da direita para a mesma cifra. */
+{
+  const e = NOT.parse("LH: C").notes.map((n) => n.midi);
+  const d = NOT.parse("RH: C").notes.map((n) => n.midi);
+  ok("mao esquerda uma oitava abaixo", e[0] === d[0] - 12, e[0] + " vs " + d[0]);
+}
+
 /* --- 1. Estrutura das escalas --------------------------------------- */
 
 T.SCALES.forEach((s) => {

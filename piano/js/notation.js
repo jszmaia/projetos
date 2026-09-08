@@ -17,8 +17,14 @@
  *   |                     barra de compasso (so organiza a leitura)
  *   // comentario         ignorado ate o fim da linha
  *
+ *   Em  C  G  D           CIFRA: o acorde e montado e empilhado sozinho
+ *   Em:4                  cifra de quatro tempos
+ *
  *   RH: ...               daqui em diante e mao direita (padrao)
  *   LH: ...               daqui em diante e mao esquerda
+ *
+ * Nota e cifra se distinguem pela oitava: "E4" e uma nota, "Em" e um acorde.
+ * Por isso a oitava e obrigatoria em nota solta.
  *
  * As duas maos correm em paralelo: cada uma tem seu proprio relogio, entao
  * a esquerda pode ter figuras longas enquanto a direita corre. E por isso
@@ -46,6 +52,25 @@
     }
     var midi = (parseInt(m[3], 10) + 1) * 12 + LETTER_PC[letra] + acc;
     return midi >= 0 && midi <= 127 ? midi : null;
+  }
+
+  /* Cifra -> lista de MIDI, empilhada a partir da oitava dada.
+   * As notas sobem sempre: quando a proxima classe cai abaixo da anterior,
+   * ela pertence a oitava seguinte. */
+  function chordMidis(simbolo, oct) {
+    if (!T || !T.chordFromSymbol) return null;
+    var c = T.chordFromSymbol(simbolo);
+    if (!c || !c.notes || !c.notes.length) return null;
+    var out = [];
+    var anterior = -1;
+    var o = oct;
+    c.notes.forEach(function (n) {
+      var pc = ((n.pc % 12) + 12) % 12;
+      if (anterior >= 0 && pc <= anterior) o++;
+      anterior = pc;
+      out.push((o + 1) * 12 + pc);
+    });
+    return out;
   }
 
   /* Separa "coisa:duracao" respeitando os colchetes do acorde. */
@@ -113,12 +138,24 @@
         }
 
         var m1 = noteToMidi(corpo);
-        if (m1 === null) {
-          erros.push("linha " + (nLinha + 1) + ": nao entendi \"" + tok + "\"");
+        if (m1 !== null) {
+          notes.push({ midi: m1, start: relogio[mao], dur: dur, hand: mao });
+          relogio[mao] += dur;
           return;
         }
-        notes.push({ midi: m1, start: relogio[mao], dur: dur, hand: mao });
-        relogio[mao] += dur;
+
+        /* Nao e nota com oitava: tenta como cifra. A esquerda soa uma oitava
+         * abaixo da direita, que e onde o acompanhamento normalmente fica. */
+        var midis = chordMidis(corpo, mao === "left" ? 3 : 4);
+        if (midis) {
+          midis.forEach(function (md) {
+            notes.push({ midi: md, start: relogio[mao], dur: dur, hand: mao });
+          });
+          relogio[mao] += dur;
+          return;
+        }
+
+        erros.push("linha " + (nLinha + 1) + ": nao entendi \"" + tok + "\"");
       });
     });
 

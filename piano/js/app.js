@@ -653,6 +653,11 @@
 
   var PECAS_KEY = "pt.pecas.v1";
 
+  /* O que esta no editor sobrevive ao re-render da view. Sem isso, salvar
+   * limpava o formulario de volta ao exemplo e a peca sumia da tela — logo
+   * depois de a pessoa clicar em Salvar, que e o pior momento possivel. */
+  var rascunho = null;
+
   function lerPecas() {
     try {
       var cru = localStorage.getItem(PECAS_KEY);
@@ -702,10 +707,12 @@
     var tituloIn = h("input", "sel");
     tituloIn.type = "text";
     tituloIn.placeholder = "ex.: trecho da melodia que estou estudando";
+    tituloIn.value = rascunho ? rascunho.titulo : "";
 
     var bpmIn = h("input", "sel");
     bpmIn.type = "number";
-    bpmIn.value = 90; bpmIn.min = 40; bpmIn.max = 200;
+    bpmIn.value = rascunho ? rascunho.bpm : 90;
+    bpmIn.min = 40; bpmIn.max = 200;
 
     var linha = h("div", "controls");
     linha.appendChild(labelled("Titulo", tituloIn));
@@ -715,8 +722,15 @@
     var area = h("textarea", "sel pecas-area");
     area.rows = 8;
     area.spellcheck = false;
-    area.value = EXEMPLO;
+    area.value = rascunho ? rascunho.texto : EXEMPLO;
     card.appendChild(labelled("Notas", area));
+
+    function lembrar() {
+      rascunho = { titulo: tituloIn.value, bpm: parseInt(bpmIn.value, 10) || 90, texto: area.value };
+    }
+    area.addEventListener("input", lembrar);
+    tituloIn.addEventListener("input", lembrar);
+    bpmIn.addEventListener("input", lembrar);
 
     var saida = h("div", "pecas-saida");
     var barra = h("div", "controls");
@@ -760,6 +774,7 @@
         texto: area.value,
         em: Date.now()
       });
+      lembrar();
       if (salvarPecas(lista)) render();
       else saida.appendChild(h("p", "warn",
         "Nao consegui salvar. O navegador pode estar bloqueando armazenamento (janela anonima)."));
@@ -768,6 +783,11 @@
     card.appendChild(barra);
     card.appendChild(saida);
     wrap.appendChild(card);
+
+    /* Volta com o player montado se havia algo em edicao. */
+    if (rascunho && rascunho.texto) {
+      setTimeout(function () { montar(rascunho.texto, rascunho.titulo, rascunho.bpm); }, 0);
+    }
 
     /* --- pecas salvas --- */
     var salvas = h("div", "widget-card");
@@ -788,6 +808,7 @@
           tituloIn.value = p.titulo;
           bpmIn.value = p.bpm;
           area.value = p.texto;
+          lembrar();
           montar(p.texto, p.titulo, p.bpm);
           area.scrollIntoView({ behavior: "smooth", block: "center" });
         }));
@@ -799,6 +820,45 @@
         salvas.appendChild(item);
       });
     }
+    /* Exportar e importar: localStorage some com limpeza de dados ou janela
+     * anonima, e quem digitou uma peca inteira a mao nao pode depender so
+     * dele. O arquivo e um JSON simples, legivel. */
+    var backup = h("div", "controls");
+    backup.appendChild(btn("Exportar (baixar)", function () {
+      var blob = new Blob([JSON.stringify(lista, null, 2)], { type: "application/json" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "minhas-pecas.json";
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    }));
+
+    var arquivoIn = h("input", "sel");
+    arquivoIn.type = "file";
+    arquivoIn.accept = "application/json,.json";
+    arquivoIn.addEventListener("change", function () {
+      var f = arquivoIn.files && arquivoIn.files[0];
+      if (!f) return;
+      var leitor = new FileReader();
+      leitor.onload = function () {
+        try {
+          var vindas = JSON.parse(leitor.result);
+          if (!Array.isArray(vindas)) throw new Error("formato inesperado");
+          // Acrescenta em vez de substituir: importar nao deve apagar nada.
+          vindas.forEach(function (p) {
+            if (p && typeof p.texto === "string") lista.push(p);
+          });
+          salvarPecas(lista);
+          render();
+        } catch (e) {
+          salvas.appendChild(h("p", "warn", "Nao consegui ler o arquivo: " + e.message));
+        }
+      };
+      leitor.readAsText(f);
+    });
+    backup.appendChild(labelled("Importar", arquivoIn));
+    salvas.appendChild(backup);
+
     wrap.appendChild(salvas);
 
     /* --- ajuda do formato --- */
@@ -809,12 +869,16 @@
       ["E4:2", "dois tempos"],
       ["G4:.5", "meio tempo"],
       ["r  ou  -", "pausa (aceita r:2)"],
-      ["[E4 G4 B4]", "acorde: as tres juntas"],
-      ["[E3 B3]:2", "acorde de dois tempos"],
+      ["Em  C  F#m7", "CIFRA: o acorde e montado sozinho"],
+      ["Em:4", "cifra segurada por quatro tempos"],
+      ["[E4 G4 B4]", "acorde escrito nota a nota"],
       ["|", "barra de compasso (so organiza)"],
       ["RH: / LH:", "mao direita / mao esquerda"],
       ["// texto", "comentario, ignorado"]
     ]));
+    ajuda.appendChild(h("p", "muted",
+      "Nota e cifra se distinguem pela oitava: \"E4\" e uma nota, \"Em\" e um acorde. " +
+      "Por isso a oitava e obrigatoria quando voce escreve uma nota solta."));
     ajuda.appendChild(h("p", "muted",
       "As duas maos correm em paralelo: cada uma tem seu proprio relogio, " +
       "entao a esquerda pode segurar um acorde longo enquanto a direita corre."));
