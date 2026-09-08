@@ -2320,6 +2320,7 @@
       var built = T.buildScale(node.dataset.tonic || "C", node.dataset.scale);
       if (!built) return [];
       // Sobe a oitava quando a letra "da a volta" (ex.: Sol -> La -> Do).
+      var octInicial = oct;
       var out = [], prev = -1;
       built.notes.forEach(function (n) {
         var li = ST.diatonicIndex(n.letter, 0);
@@ -2328,7 +2329,11 @@
         out.push({ letter: n.letter, acc: n.acc, oct: oct });
       });
       if (node.dataset.octave !== "no") {
-        out.push({ letter: built.notes[0].letter, acc: built.notes[0].acc, oct: oct + 1 });
+        // A nota que fecha a escala esta uma oitava acima da PRIMEIRA, nao
+        // acima da oitava corrente — que ja pode ter subido na virada da
+        // letra. Em Do maior nao ha virada e o erro nao aparecia; em Re
+        // maior a escala virava no Do# e a tonica final saia em Re6.
+        out.push({ letter: built.notes[0].letter, acc: built.notes[0].acc, oct: octInicial + 1 });
       }
       return out;
     }
