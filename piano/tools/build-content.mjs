@@ -75,17 +75,21 @@ function inline(s) {
     .replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>");
 }
 
-/** Diretiva ::widget k=v k=v  ->  <div class="w" data-w=... data-k=...> */
+/** Diretiva ::widget k=v k="v com espacos"  ->  <div class="w" data-w=...> */
 function directive(line) {
   const m = line.match(/^::([a-z0-9-]+)\s*(.*)$/i);
   if (!m) return null;
   const name = m[1];
   let attrs = ' class="w" data-w="' + escAttr(name) + '"';
-  for (const pair of m[2].split(/\s+/)) {
-    if (!pair) continue;
-    const kv = pair.split("=");
-    if (kv.length !== 2) continue;
-    attrs += " data-" + escAttr(kv[0]) + '="' + escAttr(kv[1]) + '"';
+
+  /* Valores entre aspas podem conter espacos — necessario para listas de
+   * notas (notes="C4 D4 E4"). Sem isso o split por espaco quebraria a lista
+   * em pedacos sem "=", que eram descartados em silencio. */
+  const re = /([a-zA-Z0-9_-]+)=(?:"([^"]*)"|'([^']*)'|(\S+))/g;
+  let kv;
+  while ((kv = re.exec(m[2])) !== null) {
+    const valor = kv[2] !== undefined ? kv[2] : kv[3] !== undefined ? kv[3] : kv[4];
+    attrs += " data-" + escAttr(kv[1]) + '="' + escAttr(valor) + '"';
   }
   return "<div" + attrs + "></div>";
 }

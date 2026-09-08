@@ -721,14 +721,14 @@ h5 { font-size: .86rem; margin: 0 0 8px; }
 .st-clef-stroke {
   fill: none;
   stroke: var(--text);
-  stroke-width: 2.4;
+  stroke-width: 2.8;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 .st-clef--sol .st-clef-shape {
   fill: none;
   stroke: var(--text);
-  stroke-width: 2.2;
+  stroke-width: 2.6;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -784,3 +784,14 @@ h5 { font-size: .86rem; margin: 0 0 8px; }
   stroke: var(--amber);
 }
 .st-note--active .st-head--open { fill: none; }
+
+/* Treino de leitura (widget staff-drill) */
+.drill { margin: 12px 0; }
+.drill-msg {
+  margin: 8px 0 2px;
+  font-weight: 500;
+  min-height: 1.4em;      /* reserva a linha: sem isso o layout pula a cada resposta */
+}
+.drill-msg--ok { color: var(--green); }
+.drill-msg--erro { color: var(--red); }
+.drill-score { margin: 0; color: var(--muted); font-variant-numeric: tabular-nums; }

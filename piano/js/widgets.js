@@ -2418,6 +2418,93 @@
     return wrap;
   };
 
+  /* Treino de leitura: mostra uma nota na pauta, voce acha no teclado.
+   *
+   * O widget so aceita a resposta pela TECLA, nunca por botao de nome. Ler
+   * partitura e ligar simbolo a gesto; responder "Fa" com a boca nao treina
+   * isso. E por isso que a nota certa e conferida por MIDI, nao por nome.
+   *
+   * A faixa e configuravel para acompanhar o passo a passo do modulo: as
+   * primeiras licoes usam so as notas-ancora, e a faixa abre conforme avanca.
+   */
+  W["staff-drill"] = function (node) {
+    if (!ST) return h("div", "warn", "Modulo de pauta ausente.");
+
+    var clef = node.dataset.clef || "sol";
+    var lo = ST.parseNote(node.dataset.lo || (clef === "sol" ? "C4" : "C2"));
+    var hi = ST.parseNote(node.dataset.hi || (clef === "sol" ? "G5" : "C4"));
+    if (!lo || !hi) return h("div", "warn", "Faixa invalida no treino.");
+
+    /* Sorteia entre as naturais da faixa: acidentes viriam depois, e
+     * misturar os dois assuntos de uma vez atrapalha o aprendizado. */
+    var candidatas = [];
+    for (var d = lo.dia; d <= hi.dia; d++) {
+      var letra = ["C", "D", "E", "F", "G", "A", "B"][((d % 7) + 7) % 7];
+      var oct = Math.floor(d / 7);
+      var p = ST.parseNote(letra + oct);
+      if (p) candidatas.push(p);
+    }
+    if (!candidatas.length) return h("div", "warn", "Faixa vazia no treino.");
+
+    var wrap = h("div", "drill");
+    var stBox = h("div", "st-box st-box--small");
+    wrap.appendChild(stBox);
+
+    var kbBox = h("div", "kb-box");
+    wrap.appendChild(kbBox);
+
+    var placar = h("p", "drill-score");
+    var aviso = h("p", "drill-msg");
+    wrap.appendChild(aviso);
+    wrap.appendChild(placar);
+
+    var alvo = null, acertos = 0, tentativas = 0, travado = false;
+
+    function sortear() {
+      var nova;
+      do { nova = candidatas[Math.floor(Math.random() * candidatas.length)]; }
+      while (candidatas.length > 1 && alvo && nova.midi === alvo.midi);
+      alvo = nova;
+      travado = false;
+      ST.render(stBox, [alvo], { clef: clef, ariaLabel: "Que nota e esta?" });
+      aviso.textContent = "Ache esta nota no teclado.";
+      aviso.className = "drill-msg";
+    }
+
+    function responder(midi) {
+      if (travado) return;
+      tentativas++;
+      var certo = midi === alvo.midi;
+      if (certo) acertos++;
+      travado = true;
+      A.play(midi, 0.5);
+      aviso.textContent = certo
+        ? "Certo: " + T.midiToName(alvo.midi) + "."
+        : "Era " + T.midiToName(alvo.midi) + ", voce tocou " + T.midiToName(midi) + ".";
+      aviso.className = "drill-msg " + (certo ? "drill-msg--ok" : "drill-msg--erro");
+      placar.textContent = acertos + " de " + tentativas +
+        " (" + Math.round(acertos / tentativas * 100) + "%)";
+      setTimeout(sortear, certo ? 650 : 1500);
+    }
+
+    /* O teclado cobre a faixa sorteada, e nao mais que isso. Mostrar duas
+     * oitavas quando o treino so sorteia cinco notas poe na tela um monte de
+     * tecla que nunca e resposta, e encolhe as que sao. */
+    var faixaLo = Math.floor(lo.midi / 12) * 12;
+    // O teclado ja desenha a tecla final (7*oitavas+1 brancas), entao a faixa
+    // coberta e [faixaLo, faixaLo + 12*oitavas] — sem +1 aqui.
+    var oitavas = Math.max(1, Math.ceil((hi.midi - faixaLo) / 12));
+    KB.render(kbBox, {
+      startMidi: faixaLo,
+      octaves: oitavas,
+      onKey: function (midi) { responder(midi); }
+    });
+
+    sortear();
+    if (node.dataset.caption) wrap.appendChild(caption(node.dataset.caption));
+    return wrap;
+  };
+
   /* ------------------------------------------------------------------ *
    * Hidratacao
    * ------------------------------------------------------------------ */

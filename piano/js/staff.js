@@ -111,11 +111,6 @@
   }
 
   /*
-   * Claves: os unicos desenhos a mao do projeto.
-   * Paths autorais, simplificados, desenhados para caber em 4 espacos de
-   * pauta. Nao sao tipograficamente exatos — sao legiveis e reconheciveis.
-   */
-  /*
    * Claves.
    *
    * A clave de sol e uma espiral, entao ela e GERADA como espiral —
@@ -157,34 +152,45 @@
       var yG = yBottomLine - space;
       var cx = x + space * 0.95;
 
-      /* Espiral de fora para dentro, ~2,2 voltas. */
-      var esp = spiralPoints(cx, yG, space * 1.05, space * 0.12,
-                             Math.PI * 0.5, Math.PI * 0.5 + Math.PI * 4.4, 90);
+      /* A espiral enrola de fora para dentro em torno do Sol4, ~2 voltas.
+       * Comeca no ponto mais a ESQUERDA (angulo pi) porque e de la que a
+       * varredura ascendente sai — a curva e uma so, continua. */
+      var esp = spiralPoints(cx, yG, space * 1.12, space * 0.10,
+                             Math.PI, Math.PI + Math.PI * 3.7, 96);
       g.appendChild(svgEl("path", { d: polyPath(esp), class: "st-clef-shape" }));
 
-      /* Haste: do ponto externo da espiral sobe cruzando a pauta e volta,
-       * fechando no gancho embaixo. */
-      var topo = yBottomLine - space * 4.6;
-      var base = yBottomLine + space * 1.5;
+      /* A varredura: sobe pela esquerda, arqueia por cima da pauta e desce
+       * pela direita cruzando a propria haste. Nao e um oval fechado — e um
+       * S aberto, e e esse cruzamento que da a leitura de clave de sol. */
+      var topo = yG - space * 3.35;
       var p0 = esp[0];
-      var haste =
+      var sweep =
         "M " + p0[0].toFixed(2) + " " + p0[1].toFixed(2) +
-        " C " + (cx - space * 1.5) + " " + (yG - space * 1.2) +
-        " "   + (cx - space * 0.9) + " " + topo +
-        " "   + (cx + space * 0.30) + " " + topo +
-        " C "  + (cx + space * 1.55) + " " + topo +
-        " "   + (cx + space * 1.35) + " " + (yG + space * 0.6) +
-        " "   + (cx + space * 0.10) + " " + (yG + space * 1.9) +
-        " C "  + (cx - space * 1.0) + " " + (yG + space * 3.0) +
-        " "   + (cx - space * 1.1) + " " + base +
-        " "   + (cx - space * 0.1) + " " + base;
-      g.appendChild(svgEl("path", { d: haste, class: "st-clef-shape st-clef-stroke" }));
+        " C " + (cx - space * 1.48) + " " + (yG - space * 1.30) +
+        " "   + (cx - space * 1.02) + " " + (yG - space * 2.62) +
+        " "   + (cx - space * 0.10) + " " + topo +
+        " C " + (cx + space * 0.95) + " " + (yG - space * 3.88) +
+        " "   + (cx + space * 1.16) + " " + (yG - space * 2.20) +
+        " "   + (cx + space * 0.16) + " " + (yG - space * 1.30);
+      g.appendChild(svgEl("path", { d: sweep, class: "st-clef-shape st-clef-stroke" }));
 
-      /* Gancho final. */
+      /* A haste desce do alto, atravessa a pauta e sai por baixo. Ela cruza
+       * a varredura por volta da 4a linha. */
+      var base = yG + space * 2.45;
       g.appendChild(svgEl("path", {
-        d: "M " + (cx - space * 0.1) + " " + base +
-           " c " + (space * 0.75) + " 0 " + (space * 0.95) + " " + (-space * 0.75) +
-           " " + (space * 0.1) + " " + (-space * 1.05),
+        d: "M " + (cx + space * 0.16) + " " + (yG - space * 1.30) +
+           " C " + (cx + space * 0.02) + " " + (yG + space * 0.35) +
+           " "   + (cx - space * 0.06) + " " + (yG + space * 1.40) +
+           " "   + (cx - space * 0.14) + " " + base,
+        class: "st-clef-shape st-clef-stroke"
+      }));
+
+      /* Gancho terminal, pequeno e voltado para a esquerda. */
+      g.appendChild(svgEl("path", {
+        d: "M " + (cx - space * 0.14) + " " + base +
+           " c " + (-space * 0.06) + " " + (space * 0.46) +
+           " "   + (-space * 0.72) + " " + (space * 0.50) +
+           " "   + (-space * 0.70) + " " + (space * 0.04),
         class: "st-clef-shape st-clef-stroke"
       }));
     } else {
@@ -193,14 +199,19 @@
       var yF = yBottomLine - 3 * space;
       var bx = x + space * 0.5;
 
+      /* A cabeca nasce EM CIMA da linha do Fa e o arco sai dela sem vao —
+       * antes havia um circulo solto ao lado da curva, e a emenda aparecia. */
       g.appendChild(svgEl("circle", {
-        cx: bx + space * 0.35, cy: yF, r: space * 0.42, class: "st-clef-fill"
+        cx: bx + space * 0.55, cy: yF, r: space * 0.46, class: "st-clef-fill"
       }));
       g.appendChild(svgEl("path", {
-        d: "M " + (bx + space * 0.7) + " " + (yF - space * 0.35) +
-           " C " + (bx + space * 2.2) + " " + (yF - space * 0.5) +
-           " "   + (bx + space * 2.3) + " " + (yF + space * 1.6) +
-           " "   + (bx + space * 0.2) + " " + (yF + space * 2.6),
+        d: "M " + (bx + space * 0.45) + " " + (yF - space * 0.42) +
+           " C " + (bx + space * 1.85) + " " + (yF - space * 0.72) +
+           " "   + (bx + space * 2.25) + " " + (yF + space * 1.15) +
+           " "   + (bx + space * 1.05) + " " + (yF + space * 2.05) +
+           " C " + (bx + space * 0.62) + " " + (yF + space * 2.42) +
+           " "   + (bx + space * 0.22) + " " + (yF + space * 2.55) +
+           " "   + (bx - space * 0.05) + " " + (yF + space * 2.60),
         class: "st-clef-shape st-clef-stroke"
       }));
       g.appendChild(svgEl("circle", { cx: bx + space * 2.75, cy: yF - space * 0.5, r: space * 0.16, class: "st-clef-fill" }));

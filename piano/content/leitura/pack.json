@@ -1,0 +1,16 @@
+{
+  "id": "leitura",
+  "title": "Ler partitura passo a passo",
+  "level": "Iniciante",
+  "tag": "Leitura",
+  "order": 7,
+  "summary": "Um caminho ordenado para sair do zero ate ler uma linha simples a primeira vista. Sem mnemonico: tres notas-ancora e leitura por intervalo.",
+  "goals": [
+    "Achar qualquer nota da pauta sem contar linha por linha",
+    "Ler a distancia entre duas notas antes de ler o nome delas",
+    "Tocar uma linha simples lendo, nao decorando",
+    "Entender por que a armadura aparece antes das notas"
+  ],
+  "source": "Conteudo original. A sequencia didatica segue a pratica corrente de ensino de leitura (notas-ancora e leitura intervalar), nao um texto especifico.",
+  "license": "Conteudo original"
+}
