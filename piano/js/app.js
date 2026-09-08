@@ -110,10 +110,11 @@
     var wrap = h("div", "view");
     var hero = h("section", "hero");
     hero.innerHTML =
-      "<h1>Piano do zero ao avancado</h1>" +
+      "<span class=\"hero-badge\">\u266a " + MODULES.length + " modulos \u00b7 " + allLessons().length + " licoes</span>" +
+      "<h1>Piano do zero ao <span class=\"hero-accent\">avancado</span></h1>" +
       "<p class=\"hero-sub\">Um curso linear de teoria e pratica, em que cada escala e deduzida da fisica do som " +
       "e da matematica dos 12 semitons — nunca apresentada como regra a decorar. " +
-      MODULES.length + " modulos, " + allLessons().length + " licoes, diagramas gerados a partir da propria teoria.</p>";
+      "Diagramas gerados a partir da propria teoria.</p>";
     var heroBar = h("div", "hero-bar");
     var next = nextLesson();
     if (next) {

@@ -12,21 +12,38 @@
   --line:      light-dark(#dde2ea, #2a3242);
   --line-soft: light-dark(#eaeef4, #222939);
 
-  --accent:    light-dark(#3b5bdb, #7b93ff);
-  --accent-2:  light-dark(#e8ecfb, #232c47);
+  /* Paleta "madrugada": azul-violeta e magenta mais vividos que o
+   * indigo/azul neutro original, pedido para dar um clima de neon noturno.
+   * Continuam via light-dark() para nao quebrar o tema claro/escuro. */
+  --accent:    light-dark(#5b3df0, #9c8cff);
+  --accent-2:  light-dark(#ece7fd, #26204a);
   --amber:     light-dark(#b0700c, #e8b34a);
   --amber-2:   light-dark(#fdf3e2, #33291a);
   --green:     light-dark(#137a52, #4fc98f);
   --green-2:   light-dark(#e4f6ee, #16302a);
   --red:       light-dark(#b3261e, #ff8a80);
   --red-2:     light-dark(#fdeceb, #33201f);
-  --violet:    light-dark(#7048c6, #b79cf5);
+  --violet:    light-dark(#a21caf, #e879f9);
+
+  /* Faixa "madrugada": gradiente fixo, escuro nos dois temas — igual a um
+   * banner promocional continua escuro seja qual for o tema do site. Usado
+   * so no hero e em acentos pontuais, nunca no corpo de leitura. */
+  --neon-a: #150a35;
+  --neon-b: #2a0a5c;
+  --neon-glow: #b14aed;
+  --neon-glow-2: #7b2ff7;
+  --neon-text: #f4ecff;
 
   --radius: 12px;
   --shadow: light-dark(0 1px 2px rgba(20,27,38,.06), 0 8px 24px rgba(20,27,38,.08)),
             light-dark(0 8px 30px rgba(20,27,38,.06), 0 8px 30px rgba(0,0,0,.4));
 
   font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Fonte "madrugada": cursiva, usada so em pontos pontuais (.font-script).
+   * Sem Google Fonts de proposito — o app abre offline por file://, entao a
+   * fonte tem de vir do sistema. Nao e identica a de um banner de campanha,
+   * mas fica no mesmo espirito sem depender de rede. */
+  --font-script: "Segoe Script", "Bradley Hand", "Brush Script MT", "Apple Chancery", cursive;
   font-size: 16px;
   line-height: 1.6;
 }
@@ -66,7 +83,10 @@ code, .mono {
 
 .brand { display: flex; align-items: center; gap: 11px; }
 .brand strong { display: block; font-size: 1.02rem; letter-spacing: -.01em; }
-.brand-sub { display: block; font-size: .75rem; color: var(--muted); }
+.brand-sub {
+  display: block; font-size: .82rem; color: var(--muted);
+  font-family: var(--font-script); font-style: italic;
+}
 
 .brand-mark {
   width: 34px; height: 34px; border-radius: 9px;
@@ -135,16 +155,68 @@ h5 { font-size: .86rem; margin: 0 0 8px; }
 
 /* ------------------------------------------------------------------ hero */
 
+/* Hero "madrugada": fundo fixo escuro com halos de glow, independente do
+ * tema claro/escuro do site — como um banner de campanha, que fica sempre
+ * escuro. So esta secao usa cor fixa em vez de light-dark(); o resto do
+ * app continua acompanhando o tema do visualizador. */
 .hero {
-  background: linear-gradient(135deg, var(--accent-2), var(--surface));
-  border: 1px solid var(--line);
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 60% 80% at 15% 20%, rgba(177,74,237,.35), transparent 60%),
+    radial-gradient(ellipse 50% 70% at 85% 90%, rgba(123,47,247,.30), transparent 60%),
+    linear-gradient(135deg, var(--neon-a), var(--neon-b));
+  border: 1px solid rgba(177,74,237,.25);
   border-radius: 18px;
-  padding: 32px 30px;
+  padding: 34px 30px;
   margin-bottom: 32px;
+  color: var(--neon-text);
 }
-.hero h1 { font-size: 2.15rem; margin-bottom: 10px; }
-.hero-sub { color: var(--muted); max-width: 68ch; margin: 0 0 20px; }
-.hero-bar { display: flex; gap: 10px; flex-wrap: wrap; }
+.hero h1 { font-size: 2.15rem; margin-bottom: 10px; color: #fff; }
+.hero-sub { color: light-dark(#d9c8ff, #d9c8ff); max-width: 68ch; margin: 0 0 20px; opacity: .92; }
+.hero-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+/* O trecho do titulo em destaque, no estilo "madrugada": cursivo, com o
+ * glow que o resto do hero tambem usa. */
+.hero-accent {
+  font-family: var(--font-script);
+  font-weight: 400;
+  font-style: italic;
+  color: #f0d9ff;
+  text-shadow: 0 0 12px var(--neon-glow), 0 0 28px rgba(177,74,237,.6);
+}
+
+/* Emblema tipo "18h as 9h" do banner: pilula com borda neon. Aqui carrega
+ * uma estatistica real do curso, nao uma promocao. */
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 14px; margin-bottom: 16px;
+  border: 1px solid var(--neon-glow);
+  border-radius: 99px;
+  color: #f0d9ff;
+  font-size: .78rem; font-weight: 600; letter-spacing: .02em;
+  box-shadow: 0 0 14px rgba(177,74,237,.45), inset 0 0 10px rgba(177,74,237,.15);
+}
+
+.hero-bar .btn--primary {
+  background: linear-gradient(90deg, var(--neon-glow-2), var(--neon-glow));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 0 18px rgba(177,74,237,.55);
+}
+.hero-bar .btn--primary:hover {
+  background: linear-gradient(90deg, #8a3ffc, #c860f5);
+  box-shadow: 0 0 24px rgba(177,74,237,.75);
+}
+.hero-bar .btn:not(.btn--primary) {
+  background: rgba(255,255,255,.05);
+  border-color: rgba(240,217,255,.4);
+  color: #f0d9ff;
+}
+.hero-bar .btn:not(.btn--primary):hover {
+  background: rgba(255,255,255,.12);
+  border-color: var(--neon-glow);
+}
 
 /* --------------------------------------------------------------- modulos */
 
