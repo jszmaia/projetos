@@ -16,6 +16,7 @@ sandbox.globalThis = sandbox;
 vm.createContext(sandbox);
 vm.runInContext(readFileSync(join(DIR, "js/theory.js"), "utf8"), sandbox);
 vm.runInContext(readFileSync(join(DIR, "js/staff.js"), "utf8"), sandbox);
+vm.runInContext(readFileSync(join(DIR, "js/notation.js"), "utf8"), sandbox);
 vm.runInContext(readFileSync(join(DIR, "js/exercises.js"), "utf8"), sandbox);
 vm.runInContext(readFileSync(join(DIR, "js/curriculum-a.js"), "utf8"), sandbox);
 vm.runInContext(readFileSync(join(DIR, "js/curriculum-b.js"), "utf8"), sandbox);
@@ -25,6 +26,7 @@ for (const f of readdirSync(join(DIR, "js")).filter((f) => f.startsWith("pack-")
 
 const T = sandbox.PT.theory;
 const ST = sandbox.PT.staff;
+const NOT = sandbox.PT.notation;
 const EX = sandbox.PT.exercises;
 const CURRICULUM = sandbox.PT.CURRICULUM;
 
@@ -106,6 +108,88 @@ for (const tonica of ["C", "G", "D", "A", "E", "B", "F", "Bb", "Eb", "Ab", "Db"]
          typeof oct === "number" && oct >= 0 && oct <= 8, String(oct));
     });
   }
+}
+
+/* --- 0b. Notacao em texto (js/notation.js) --------------------------- */
+
+/* Duracao padrao e um tempo, e o total fecha. */
+{
+  const r = NOT.parse("E4 F#4 G4 A4");
+  eq("quatro notas seguidas", r.notes.length, 4);
+  eq("quatro tempos no total", r.beats, 4);
+  eq("comecam em 0,1,2,3", r.notes.map((n) => n.start), [0, 1, 2, 3]);
+}
+
+/* Duracao explicita muda o relogio. */
+{
+  const r = NOT.parse("E4:2 G4:.5 A4:.5");
+  eq("tres notas com duracao propria", r.notes.map((n) => n.dur), [2, 0.5, 0.5]);
+  eq("total de tres tempos", r.beats, 3);
+}
+
+/* Acorde: mesmas notas, mesmo instante. */
+{
+  const r = NOT.parse("[E4 G4 B4]");
+  eq("acorde tem 3 notas", r.notes.length, 3);
+  ok("todas comecam juntas", r.notes.every((n) => n.start === 0));
+  eq("acorde ocupa 1 tempo", r.beats, 1);
+}
+
+/* Pausa avanca o relogio sem gerar nota. */
+{
+  const r = NOT.parse("C4 r D4");
+  eq("pausa nao vira nota", r.notes.length, 2);
+  eq("a nota apos a pausa comeca em 2", r.notes[1].start, 2);
+}
+
+/* As duas maos correm em PARALELO, cada uma com seu relogio. */
+{
+  const r = NOT.parse("RH: E4 F#4\nLH: [E3 B3]:2");
+  const dir = r.notes.filter((n) => n.hand === "right");
+  const esq = r.notes.filter((n) => n.hand === "left");
+  eq("direita com duas notas", dir.length, 2);
+  eq("esquerda com duas (o acorde)", esq.length, 2);
+  ok("esquerda comeca em 0", esq.every((n) => n.start === 0));
+  eq("direita comeca em 0 e 1", dir.map((n) => n.start), [0, 1]);
+  eq("o trecho dura 2 tempos", r.beats, 2);
+}
+
+/* Barra de compasso e comentario nao afetam o tempo. */
+{
+  const a = NOT.parse("C4 D4 E4");
+  const b = NOT.parse("C4 | D4 | E4  // comentario");
+  eq("barra e comentario nao mudam nada", b.notes.map((n) => n.start), a.notes.map((n) => n.start));
+}
+
+/* Erro nao descarta o resto: reporta e segue. */
+{
+  const r = NOT.parse("E4 Xy9 G4");
+  eq("as validas continuam", r.notes.length, 2);
+  ok("o erro e reportado", r.erros.length === 1, JSON.stringify(r.erros));
+  ok("o erro diz a linha", /linha 1/.test(r.erros[0]), r.erros[0]);
+}
+
+/* A oitava pertence a LETRA, igual ao resto do projeto. */
+eq("Si#3 no texto vale 60", NOT.noteToMidi("B#3"), 60);
+eq("Dob4 no texto vale 59", NOT.noteToMidi("Cb4"), 59);
+eq("as tres formas de escrever Do4", 
+   [NOT.noteToMidi("C4"), T.nameToMidi("C4"), ST.parseNote("C4").midi], [60, 60, 60]);
+
+/* Ida e volta: texto -> notas -> texto -> notas da o mesmo. */
+{
+  const original = "RH: C4 E4 G4:2\nLH: C3:4";
+  const r1 = NOT.parse(original);
+  const r2 = NOT.parse(NOT.toText(r1.notes));
+  eq("ida e volta preserva as notas",
+     r2.notes.map((n) => [n.midi, n.start, n.dur, n.hand]),
+     r1.notes.map((n) => [n.midi, n.start, n.dur, n.hand]));
+}
+
+/* Toda nota gerada cai dentro das 88 teclas quando o texto e razoavel. */
+{
+  const r = NOT.parse("A0 C4 C8");
+  ok("faixa do piano aceita", r.notes.every((n) => n.midi >= 21 && n.midi <= 108),
+     JSON.stringify(r.notes.map((n) => n.midi)));
 }
 
 /* --- 1. Estrutura das escalas --------------------------------------- */

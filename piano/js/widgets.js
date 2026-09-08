@@ -2531,6 +2531,6 @@
   global.PT = global.PT || {};
   global.PT.widgets = {
     hydrate: hydrate, registry: W,
-    helpers: { h: h, tbl: tbl, btn: btn, progression: progression, scaleBlock: scaleBlock, buildCircle: buildCircle, chordMidis: chordMidis }
+    helpers: { h: h, tbl: tbl, btn: btn, caption: caption, progression: progression, scaleBlock: scaleBlock, buildCircle: buildCircle, chordMidis: chordMidis, playerBlock: playerBlock }
   };
 })(typeof window !== "undefined" ? window : globalThis);

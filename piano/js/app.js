@@ -55,6 +55,7 @@
     { id: "escalas", label: "Escalas", icon: "▦" },
     { id: "acordes", label: "Acordes", icon: "◫" },
     { id: "circulo", label: "Circulo", icon: "◎" },
+    { id: "pecas", label: "Pecas", icon: "♪" },
     { id: "lab", label: "Laboratorio", icon: "∿" },
     { id: "ref", label: "Referencia", icon: "☰" }
   ];
@@ -77,7 +78,7 @@
 
     var view = {
       curso: viewCurso, licao: viewLicao, escalas: viewEscalas,
-      acordes: viewAcordes, circulo: viewCirculo, lab: viewLab, ref: viewRef
+      acordes: viewAcordes, circulo: viewCirculo, pecas: viewPecas, lab: viewLab, ref: viewRef
     }[r.view] || viewCurso;
 
     main.appendChild(view(r.arg));
@@ -636,6 +637,191 @@
   /* ------------------------------------------------------------------ *
    * View: Laboratorio
    * ------------------------------------------------------------------ */
+
+  /* ------------------------------------------------------------------ *
+   * View: Minhas pecas
+   *
+   * O app sabia tocar so o que ele mesmo gerava. Esta pagina e a porta de
+   * entrada para musica de verdade: voce digita a peca a partir da cifra ou
+   * da partitura que tem, e o app a trata como trata os exercicios — pauta,
+   * teclado acendendo, maos separadas, tempo reduzido, trecho em loop.
+   *
+   * As pecas ficam no localStorage DESTE navegador. Nada e enviado a lugar
+   * nenhum, e nada entra no repositorio — o que voce digita e seu, e musica
+   * sob direito autoral nao deve ser publicada de qualquer forma.
+   * ------------------------------------------------------------------ */
+
+  var PECAS_KEY = "pt.pecas.v1";
+
+  function lerPecas() {
+    try {
+      var cru = localStorage.getItem(PECAS_KEY);
+      var lista = cru ? JSON.parse(cru) : [];
+      return Array.isArray(lista) ? lista : [];
+    } catch (e) {
+      // Navegador anonimo ou armazenamento bloqueado: segue sem persistir.
+      return [];
+    }
+  }
+
+  function salvarPecas(lista) {
+    try {
+      localStorage.setItem(PECAS_KEY, JSON.stringify(lista));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  var EXEMPLO = [
+    "// Uma linha por mao. Duracao em tempos apos os dois pontos.",
+    "// Sem duracao = 1 tempo. r = pausa. [ ] = acorde. | = compasso.",
+    "RH: E4 F#4 G4 A4 | B4:2 A4:2",
+    "LH: [E3 B3]:4 | [C3 G3]:4"
+  ].join("\n");
+
+  function viewPecas() {
+    var N = global.PT.notation;
+    var wrap = h("div", "view");
+    wrap.appendChild(h("h1", null, "Minhas pecas"));
+    wrap.appendChild(h("p", "view-sub",
+      "Digite a musica que voce quer estudar e o app a ensina como ensina os exercicios: " +
+      "pauta, teclado acendendo, maos separadas e tempo reduzido. Fica salva neste navegador."));
+
+    if (!N) {
+      wrap.appendChild(h("p", "warn", "Modulo de notacao ausente."));
+      return wrap;
+    }
+
+    var lista = lerPecas();
+
+    /* --- formulario --- */
+    var card = h("div", "widget-card");
+    card.appendChild(h("h4", null, "Nova peca"));
+
+    var tituloIn = h("input", "sel");
+    tituloIn.type = "text";
+    tituloIn.placeholder = "ex.: trecho da melodia que estou estudando";
+
+    var bpmIn = h("input", "sel");
+    bpmIn.type = "number";
+    bpmIn.value = 90; bpmIn.min = 40; bpmIn.max = 200;
+
+    var linha = h("div", "controls");
+    linha.appendChild(labelled("Titulo", tituloIn));
+    linha.appendChild(labelled("Andamento (bpm)", bpmIn));
+    card.appendChild(linha);
+
+    var area = h("textarea", "sel pecas-area");
+    area.rows = 8;
+    area.spellcheck = false;
+    area.value = EXEMPLO;
+    card.appendChild(labelled("Notas", area));
+
+    var saida = h("div", "pecas-saida");
+    var barra = h("div", "controls");
+
+    function montar(texto, titulo, bpm) {
+      var r = N.parse(texto);
+      saida.innerHTML = "";
+      if (r.erros.length) {
+        var box = h("div", "warn");
+        box.appendChild(h("p", null, "Nao consegui ler " + r.erros.length +
+          (r.erros.length === 1 ? " trecho:" : " trechos:")));
+        var ul = h("ul");
+        r.erros.slice(0, 6).forEach(function (e) { ul.appendChild(h("li", null, e)); });
+        box.appendChild(ul);
+        saida.appendChild(box);
+      }
+      if (!r.notes.length) {
+        saida.appendChild(h("p", "warn", "Nenhuma nota reconhecida."));
+        return null;
+      }
+      var piece = {
+        title: titulo || "Sem titulo",
+        notes: r.notes,
+        beats: r.beats,
+        bpm: bpm || 90
+      };
+      saida.appendChild(HP.playerBlock(piece));
+      return piece;
+    }
+
+    barra.appendChild(btn("Tocar", function () {
+      montar(area.value, tituloIn.value, parseInt(bpmIn.value, 10));
+    }, "btn--primary"));
+
+    barra.appendChild(btn("Salvar", function () {
+      var r = N.parse(area.value);
+      if (!r.notes.length) { montar(area.value, tituloIn.value, parseInt(bpmIn.value, 10)); return; }
+      lista.push({
+        titulo: tituloIn.value || "Sem titulo",
+        bpm: parseInt(bpmIn.value, 10) || 90,
+        texto: area.value,
+        em: Date.now()
+      });
+      if (salvarPecas(lista)) render();
+      else saida.appendChild(h("p", "warn",
+        "Nao consegui salvar. O navegador pode estar bloqueando armazenamento (janela anonima)."));
+    }));
+
+    card.appendChild(barra);
+    card.appendChild(saida);
+    wrap.appendChild(card);
+
+    /* --- pecas salvas --- */
+    var salvas = h("div", "widget-card");
+    salvas.appendChild(h("h4", null, "Salvas neste navegador (" + lista.length + ")"));
+    if (!lista.length) {
+      salvas.appendChild(h("p", "muted",
+        "Nenhuma ainda. Escreva acima e clique em Salvar."));
+    } else {
+      lista.slice().reverse().forEach(function (p) {
+        var item = h("div", "peca-item");
+        var cab = h("div", "peca-cab");
+        cab.appendChild(h("strong", null, p.titulo));
+        cab.appendChild(h("span", "mono", p.bpm + " bpm"));
+        item.appendChild(cab);
+
+        var acoes = h("div", "controls");
+        acoes.appendChild(btn("Abrir", function () {
+          tituloIn.value = p.titulo;
+          bpmIn.value = p.bpm;
+          area.value = p.texto;
+          montar(p.texto, p.titulo, p.bpm);
+          area.scrollIntoView({ behavior: "smooth", block: "center" });
+        }));
+        acoes.appendChild(btn("Apagar", function () {
+          var i = lista.indexOf(p);
+          if (i >= 0) { lista.splice(i, 1); salvarPecas(lista); render(); }
+        }));
+        item.appendChild(acoes);
+        salvas.appendChild(item);
+      });
+    }
+    wrap.appendChild(salvas);
+
+    /* --- ajuda do formato --- */
+    var ajuda = h("div", "widget-card");
+    ajuda.appendChild(h("h4", null, "Como escrever"));
+    ajuda.appendChild(tbl(["Voce escreve", "Significa"], [
+      ["E4 F#4 G4", "tres notas, um tempo cada"],
+      ["E4:2", "dois tempos"],
+      ["G4:.5", "meio tempo"],
+      ["r  ou  -", "pausa (aceita r:2)"],
+      ["[E4 G4 B4]", "acorde: as tres juntas"],
+      ["[E3 B3]:2", "acorde de dois tempos"],
+      ["|", "barra de compasso (so organiza)"],
+      ["RH: / LH:", "mao direita / mao esquerda"],
+      ["// texto", "comentario, ignorado"]
+    ]));
+    ajuda.appendChild(h("p", "muted",
+      "As duas maos correm em paralelo: cada uma tem seu proprio relogio, " +
+      "entao a esquerda pode segurar um acorde longo enquanto a direita corre."));
+    wrap.appendChild(ajuda);
+
+    return wrap;
+  }
 
   function viewLab() {
     var wrap = h("div", "view");

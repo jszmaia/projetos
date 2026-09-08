@@ -795,3 +795,24 @@ h5 { font-size: .86rem; margin: 0 0 8px; }
 .drill-msg--ok { color: var(--green); }
 .drill-msg--erro { color: var(--red); }
 .drill-score { margin: 0; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Minhas pecas */
+.pecas-area {
+  width: 100%;
+  font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+  resize: vertical;
+  min-height: 150px;
+}
+.pecas-saida { margin-top: 12px; }
+.peca-item {
+  padding: 10px 0;
+  border-top: 1px solid var(--line-soft);
+}
+.peca-item:first-of-type { border-top: none; }
+.peca-cab {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 6px;
+}
