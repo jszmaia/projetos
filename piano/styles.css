@@ -1,7 +1,11 @@
 /* Piano Teoria — folha de estilo unica, sem dependencias externas. */
 
 :root {
-  color-scheme: light dark;
+  /* Fundo escuro fixo, sempre — nao so quando o navegador/SO estiver no
+   * modo escuro. E o que da o clima "madrugada" ao site inteiro, nao so ao
+   * hero: light-dark() com color-scheme travado em "dark" resolve sempre
+   * para o segundo valor de cada par, em qualquer tema do visualizador. */
+  color-scheme: dark;
 
   --bg:        light-dark(#f6f7fa, #0e1116);
   --bg-2:      light-dark(#eceff5, #141922);

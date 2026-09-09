@@ -32,16 +32,17 @@ export function scriptsFromIndex(html) {
 export const SCRIPTS = scriptsFromIndex(read("index.html"));
 
 /*
- * O visualizador de artefatos expressa o tema de tres formas: sem marca
- * (segue o sistema), data-theme="dark" e data-theme="light". A folha de
- * estilo usa light-dark(), que resolve pelo `color-scheme` em uso — entao
- * basta amarrar o color-scheme ao atributo para cobrir os tres estados
- * sem duplicar uma unica cor.
+ * O app tem o visual "madrugada": fundo escuro fixo, de proposito, como um
+ * banner de campanha que nao muda de cor com o tema de quem olha. Por isso
+ * esta ponte IGNORA a escolha de tema do visualizador de artefatos em vez
+ * de segui-la — sem isso, um data-theme="light" imposto pelo visualizador
+ * tinha especificidade maior que o color-scheme:dark do styles.css e
+ * reacendia o tema claro so nessa hospedagem, deixando o app com a cara
+ * certa no arquivo baixado mas errada no link publicado.
  */
 const THEME_BRIDGE = `
-/* ---- ponte de tema: faz light-dark() responder ao seletor do visualizador --- */
-:root[data-theme="dark"]  { color-scheme: dark; }
-:root[data-theme="light"] { color-scheme: light; }
+/* ---- ponte de tema: o app e propositalmente sempre escuro --- */
+:root { color-scheme: dark; }
 `;
 
 /* Marcacao identica a do index.html, sem as tags de documento (o artefato
