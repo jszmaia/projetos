@@ -1,0 +1,15 @@
+{
+  "id": "tecnica",
+  "title": "Tecnica ao teclado",
+  "level": "Tecnica",
+  "tag": "Pratica",
+  "order": 10,
+  "summary": "Exercicios de mecanismo gerados por regra, tocaveis em qualquer tonalidade — escala, arpejo, tercas, movimento contrario e o Hanon nº 1.",
+  "goals": [
+    "Entender por que cada exercicio existe, e nao so como se toca",
+    "Tocar os exercicios base em pelo menos quatro tonalidades",
+    "Usar o metronomo como diagnostico, nao como cronometro"
+  ],
+  "source": "Hanon nº 1 conferido contra o texto impresso (dominio publico, Charles-Louis Hanon, 1873). Demais exercicios derivados do motor teorico.",
+  "license": "Dominio publico / conteudo original"
+}

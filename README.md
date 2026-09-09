@@ -1,38 +1,72 @@
-# B3 Bolsa Monitor
+# projetos
 
-Painel de mercado brasileiro e global. A B3 e a fonte oficial para dados de indices e componentes brasileiros. Para mercados globais, detalhes de ativos, noticias e graficos, o app usa a assinatura **Yahoo Finance via RapidAPI**.
+Dois aplicativos independentes, cada um autocontido em sua propria pasta. Eles nao compartilham
+codigo, dependencias nem configuracao — voce pode trabalhar em um sem tocar no outro.
 
-## Como a chave funciona
+| Pasta | Projeto | O que e | Como rodar |
+|---|---|---|---|
+| [`b3/`](b3/README.md) | **B3 Bolsa Monitor** | Painel de mercado brasileiro e global, com dados da B3 e do Yahoo Finance via RapidAPI. Exige uma chave de API. | `npm run b3` → `http://localhost:4173` |
+| [`piano/`](piano/README.md) | **Piano Teoria** | Curso de piano e teoria musical, do iniciante ao avancado. Sem dependencias, sem build, sem rede. | `npm run piano` → `http://localhost:4180` |
 
-O Yahoo Finance nao disponibiliza uma API publica oficial para esse uso. Por isso, o projeto integra a API hospedada pela RapidAPI. Cada pessoa que executar sua propria copia do aplicativo deve criar uma conta na RapidAPI, assinar o produto correspondente e usar a propria chave. Os planos possuem limites e precos definidos pela RapidAPI.
+## Rodar com um comando
 
-1. Crie uma conta em [RapidAPI](https://rapidapi.com/).
-2. Assine a API `Yahoo Finance` cujo host seja `apidojo-yahoo-finance-v1.p.rapidapi.com`.
-3. Copie a chave apresentada nos exemplos da RapidAPI.
-4. Crie um arquivo chamado `.env` ao lado deste README, com base em `.env.example`.
-5. Inicie com `npm start` e abra `http://localhost:4173`.
-
-Se a RapidAPI retornar `403` com a mensagem `You are not subscribed to this API`, a chave esta correta, mas a conta ainda nao foi aprovada ou inscrita no produto. Volte a pagina da API na RapidAPI e ative um plano para o host acima; criar a conta ou enviar uma solicitacao, por si so, nao libera as consultas.
-
-Exemplo de configuracao (nao use uma chave real em arquivos versionados):
-
-```env
-RAPIDAPI_KEY=sua_chave_privada
-RAPIDAPI_HOST=apidojo-yahoo-finance-v1.p.rapidapi.com
+```bash
+./rodar.sh          # curso de piano (padrao)
+./rodar.sh b3       # painel de mercado
 ```
 
-O servidor le o `.env` ao iniciar. Em hospedagem, prefira configurar `RAPIDAPI_KEY` como variavel de ambiente do provedor; ela substitui o valor do arquivo local.
+O script sobe o servidor, **espera ele responder** e abre o navegador sozinho. Se a porta
+estiver ocupada, procura a proxima livre em vez de falhar. `Ctrl+C` encerra.
 
-## Seguranca da chave
+Para escolher a porta: `PIANO_PORT=8080 ./rodar.sh`
 
-- O `.env` esta no `.gitignore` e nao deve ser enviado para GitHub, compartilhado ou colocado no frontend.
-- A chave fica somente no servidor: o navegador chama as rotas locais do aplicativo e nunca recebe o valor da credencial.
-- Caso uma chave seja publicada por engano, revogue ou gere outra no painel da RapidAPI.
+Se preferir os comandos crus, cada pasta tem seu proprio `package.json`:
 
-## Sem RapidAPI
+```bash
+npm run piano             # ou: cd piano && npm start
+npm run b3                # ou: cd b3    && npm start
+cd piano && npm test      # testes do motor teorico
+```
 
-O painel continua mostrando a B3 e seus componentes oficiais. Os recursos Yahoo aparecem como indisponiveis ate que uma chave seja configurada.
+## Abrir o piano sem terminal
 
-## Fontes e limites
+O piano dispensa servidor: da para abrir `piano/index.html` direto no navegador, pelo
+protocolo `file://`.
 
-Dados de mercado podem ter atraso, limites de requisicao ou cobertura variavel conforme o plano contratado. O aplicativo e um monitor informativo e nao constitui recomendacao de investimento.
+Para levar o curso a um aparelho que nao tem este repositorio — outro computador, um tablet —
+gere o arquivo unico:
+
+```bash
+node piano/build-single.mjs        # → piano/dist/piano-teoria.html
+```
+
+Sai um HTML de ~360 KB com CSS e scripts embutidos. Copie so esse arquivo, de dois cliques e
+pronto: abre no navegador, funciona offline, nao precisa de Node nem de terminal.
+
+Um detalhe de navegador, nao do app: o som so comeca depois do primeiro clique na pagina.
+Navegadores bloqueiam audio ate haver interacao do usuario.
+
+## Estrutura
+
+```
+.
+├── b3/        painel de mercado — servidor Node + frontend estatico
+│   ├── server.mjs        API + arquivos estaticos (le b3/.env)
+│   ├── index.html app.js styles.css
+│   └── .env.example      modelo da chave da RapidAPI
+│
+└── piano/     curso de piano — 100% estatico
+    ├── index.html styles.css
+    ├── serve.mjs         servidor estatico opcional
+    ├── test-theory.mjs   1733 assercoes sobre o motor teorico
+    └── js/               motor teorico, teclado SVG, audio, curriculo
+```
+
+## Diferencas importantes entre os dois
+
+- **b3/** precisa de rede e de uma chave da RapidAPI configurada em `b3/.env`
+  (veja `b3/.env.example`). Sem a chave, o painel ainda mostra os dados oficiais da B3.
+- **piano/** nao precisa de nada: funciona ate abrindo `piano/index.html` direto no navegador,
+  pelo protocolo `file://`.
+
+O arquivo `.env` esta no `.gitignore` e nunca deve ser versionado.

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Piano Teoria — do iniciante ao avancado</title>
+    <meta name="description" content="Curso linear de piano e teoria musical: escalas deduzidas da serie harmonica, diagramas de teclado gerados por calculo e ferramentas interativas.">
+    <link rel="stylesheet" href="./styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23151b26'/><rect x='5' y='8' width='4.5' height='17' fill='%23f4f6fb'/><rect x='10.5' y='8' width='4.5' height='17' fill='%23f4f6fb'/><rect x='16' y='8' width='4.5' height='17' fill='%23f4f6fb'/><rect x='21.5' y='8' width='4.5' height='17' fill='%23f4f6fb'/><rect x='8' y='8' width='3' height='10' fill='%23151b26'/><rect x='13.5' y='8' width='3' height='10' fill='%23151b26'/><rect x='24' y='8' width='3' height='10' fill='%23151b26'/></svg>">
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div>
+          <strong>Piano Teoria</strong>
+          <span class="brand-sub">teoria deduzida, nao decorada</span>
+        </div>
+      </div>
+      <nav id="nav" class="nav" aria-label="Secoes"></nav>
+      <div class="progress">
+        <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
+        <span id="progress-label" class="progress-label">0 / 0</span>
+      </div>
+    </header>
+
+    <main id="view" class="main"></main>
+
+    <footer class="footer">
+      <p>Todos os diagramas, tabelas e frequencias sao gerados em tempo real pelo motor teorico
+      (<code>js/theory.js</code>) — nada e tabelado a mao. Som sintetizado via Web Audio API.</p>
+    </footer>
+
+    <div id="dock" class="dock" aria-label="Metronomo e audio"></div>
+
+    <script src="./js/theory.js"></script>
+    <script src="./js/keyboard.js"></script>
+    <script src="./js/staff.js"></script>
+    <script src="./js/notation.js"></script>
+    <script src="./js/audio.js"></script>
+    <script src="./js/exercises.js"></script>
+    <script src="./js/curriculum-a.js"></script>
+    <script src="./js/curriculum-b.js"></script>
+    <script src="./js/pack-leitura.js"></script>
+    <script src="./js/pack-tecnica.js"></script>
+    <script src="./js/widgets.js"></script>
+    <script src="./js/app.js"></script>
+  </body>
+</html>

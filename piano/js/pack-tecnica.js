@@ -1,0 +1,57 @@
+/*
+ * pack-tecnica.js — GERADO por tools/build-content.mjs
+ * NAO EDITE A MAO. Edite content/tecnica/ e recompile.
+ *
+ * Fonte: Hanon nº 1 conferido contra o texto impresso (dominio publico, Charles-Louis Hanon, 1873). Demais exercicios derivados do motor teorico.
+ * Licenca: Dominio publico / conteudo original
+ */
+(function (global) {
+  "use strict";
+  global.PT = global.PT || {};
+  global.PT.CURRICULUM = global.PT.CURRICULUM || [];
+  global.PT.CURRICULUM.push(
+    {
+      "id": "tecnica",
+      "title": "Tecnica ao teclado",
+      "level": "Tecnica",
+      "tag": "Pratica",
+      "order": 10,
+      "summary": "Exercicios de mecanismo gerados por regra, tocaveis em qualquer tonalidade — escala, arpejo, tercas, movimento contrario e o Hanon nº 1.",
+      "goals": [
+        "Entender por que cada exercicio existe, e nao so como se toca",
+        "Tocar os exercicios base em pelo menos quatro tonalidades",
+        "Usar o metronomo como diagnostico, nao como cronometro"
+      ],
+      "lessons": [
+        {
+          "id": "tec-l1",
+          "title": "Por que exercicios de tecnica existem",
+          "html": "<p>Exercicio de tecnica tem pessima reputacao, e em parte com razao: muita gente toca Hanon por vinte minutos no automatico e nao melhora nada. O problema nao e o exercicio — e tocar sem saber o que se esta corrigindo.</p>\n<p>Todo exercicio de mecanismo ataca <strong>um</strong> problema fisico especifico. Se voce sabe qual, dez minutos rendem mais que uma hora.</p>\n<h3>Os quatro problemas fisicos do piano</h3>\n<p>O teclado impoe dificuldades que nao sao musicais, e sim anatomicas:</p>\n<ol><li><strong>Os dedos tem forcas diferentes.</strong> O 4 e o 5 sao naturalmente mais fracos, e o</li></ol>\n<p>   4 divide tendao com o 3 — por isso ele parece \"preso\". Nenhuma quantidade de    forca resolve isso; o que resolve e aprender a compensar com o peso do braco.</p>\n<ol><li><strong>O polegar e curto e entra por baixo.</strong> Toda escala de mais de cinco notas</li></ol>\n<p>   exige uma passagem, e e ali que o som mais frequentemente quebra.</p>\n<ol><li><strong>A mao tem uma abertura limitada.</strong> Arpejos e acordes largos precisam de</li></ol>\n<p>   deslocamento lateral do braco, nao de esticar os dedos.</p>\n<ol><li><strong>As duas maos querem fazer a mesma coisa.</strong> Coordenacao independente e</li></ol>\n<p>   aprendida, nao natural.</p>\n<p>Cada exercicio deste modulo ataca um desses pontos, e o texto diz qual.</p>\n<h3>O que \"tocar devagar\" realmente significa</h3>\n<div class=\"callout\">Velocidade e consequencia de precisao, nunca o contrario. Se voce so consegue tocar uma passagem rapido, voce nao a domina — voce a memorizou motoramente. Dominio e conseguir tocar a metade do andamento com o mesmo controle.</div>\n<p>Tocar devagar nao e tocar a mesma coisa mais lentamente. E ter <strong>tempo de perceber</strong> cada nota antes de toca-la e de escutar o resultado depois. Se voce chega ao fim de uma escala lenta sem lembrar de nenhuma nota individual, o andamento ainda esta alto.</p>\n<h3>O metronomo e um diagnostico</h3>\n<p>A funcao dele nao e te obrigar a acelerar. E revelar onde voce desacelera sem perceber — e isso quase sempre acontece exatamente na dificuldade tecnica: na passagem do polegar, na nota do dedo 4, na mudanca de direcao.</p>\n<p>Quando o metronomo denuncia um ponto, <strong>isole os dois compassos ao redor dele</strong> e trabalhe so ali. Repetir a peca inteira para consertar um lugar e o desperdicio mais comum do estudo caseiro.</p>\n<h3>Uma nota sobre este modulo</h3>\n<p>Os exercicios aqui nao estao digitados nota a nota: eles sao <strong>gerados por regra</strong> a partir do mesmo motor teorico que desenha as escalas no resto do app. Isso tem uma consequencia pratica que o livro impresso nao oferece — voce pode tocar qualquer um deles em <strong>qualquer tonalidade</strong>, trocando no seletor.</p>",
+          "practice": [
+            "Toque a escala de Do maior a 60 bpm gravando o audio. Escute depois procurando notas desiguais.",
+            "Repita em Si maior. Compare qual das duas soou mais parelha — quase sempre e a segunda."
+          ]
+        },
+        {
+          "id": "tec-l2",
+          "title": "Hanon nº 1, e por que ele e um algoritmo",
+          "html": "<p>O primeiro exercicio do <em>Le Pianiste Virtuose</em> (Hanon, 1873) e provavelmente o trecho de piano mais tocado do mundo. Ele parece uma sequencia arbitraria de notas. Nao e.</p>\n<h3>A figura</h3>\n<p>A mao direita toca <strong>Do Mi Fa Sol La Sol Fa Mi</strong>, e depois repete a mesma forma comecando um grau acima: <strong>Re Fa Sol La Si La Sol Fa</strong>. E assim por diante, subindo a escala; na volta, a figura e espelhada.</p>\n<p>Escrito em <strong>graus da escala</strong> em vez de nomes de notas, o padrao inteiro cabe em oito numeros:</p>\n<div class=\"math-box\"><pre class=\"mono\">[ 0, +2, +3, +4, +5, +4, +3, +2 ]</pre></div>\n<p>Isto e: parta de um grau, pule um, suba tres por grau conjunto, e volte.</p>\n<h3>Por que isso importa</h3>\n<p>Guardar a <strong>regra</strong> em vez das notas nao e economia de espaco — muda o que o exercicio consegue fazer:</p>\n<table class=\"tbl\"><thead><tr><th>Guardando notas</th><th>Guardando a regra</th></tr></thead><tbody><tr><td>224 notas digitadas para a mao direita</td><td>8 numeros</td></tr><tr><td>erros de digitacao possiveis</td><td>nao ha o que digitar errado</td></tr><tr><td>existe em uma tonalidade so</td><td>existe em todas as 12</td></tr><tr><td>dedilhado fixo</td><td>dedilhado recalculado por tonalidade</td></tr></tbody></table>\n<p>O app gera as 224 notas a partir desses oito numeros toda vez que voce troca de tonalidade. Experimente no seletor abaixo.</p>\n<div class=\"w\" data-w=\"exercise\" data-ex=\"hanon-1\" data-tonic=\"C\"></div>\n<h3>O que este exercicio realmente treina</h3>\n<p>Repare na figura: ela usa os dedos <strong>1 2 3 4 5 4 3 2</strong>, e o polegar toca <strong>uma vez so</strong>, no inicio. O corpo do exercicio fica todo sobre os dedos 2 a 5 — justamente os fracos, e justamente o 4, que divide tendao com o 3.</p>\n<p>Nao e um exercicio de escala disfarçado. E um exercicio de <strong>igualdade entre dedos desiguais</strong>.</p>\n<div class=\"callout\">O criterio de sucesso nao e velocidade: e nao conseguir ouvir qual dedo tocou qual nota. Se o La (dedo 5) sai mais fraco ou o Sol (dedo 4) atrasa, diminua o andamento ate isso desaparecer. Nao adianta acelerar por cima do defeito.</div>\n<h3>Como estudar</h3>\n<ol><li><strong>Maos separadas primeiro</strong>, a 60 bpm, uma nota por tempo. Sem pedal.</li><li>Junte as maos so quando cada uma estiver parelha sozinha.</li><li>Suba de 4 em 4 bpm, e apenas depois de tres repeticoes perfeitas seguidas.</li><li>Cinco minutos por dia bastam. Vinte minutos de repeticao desatenta nao valem</li></ol>\n<p>   mais que cinco atentos — e cansam a mao, o que atrapalha o resto do estudo.</p>\n<h3>Honestidade sobre a fonte</h3>\n<p>O padrao acima foi conferido nota a nota contra o texto impresso do exercicio nº 1. Os demais exercicios do Hanon (nº 2 a 60) <strong>nao</strong> estao neste app: cada um tem seu proprio padrao, e transcreve-los exige a partitura em maos. O motor ja esta pronto para recebe-los — cada exercicio novo custa uma linha de numeros.</p>",
+          "practice": [
+            "Toque a 60 bpm com as duas maos, ouvindo se o dedo 4 sai mais fraco que os vizinhos.",
+            "Depois de dominar em Do, troque o seletor para Fa sustenido. As teclas pretas guiam a mao e costuma ficar mais facil, nao mais dificil."
+          ]
+        },
+        {
+          "id": "tec-l3",
+          "title": "Escala, arpejo, tercas e movimento contrario",
+          "html": "<p>Estes quatro exercicios cobrem os quatro problemas fisicos do modulo 1. Todos sao <strong>derivados do motor teorico</strong> — nao sao transcricao de nenhuma edicao, e por isso funcionam em qualquer tonalidade e em qualquer escala, inclusive nas menores.</p>\n<h3>Escala em duas oitavas</h3>\n<p>Ataca o problema nº 2: a passagem do polegar.</p>\n<div class=\"w\" data-w=\"exercise\" data-ex=\"escala-2-oitavas\" data-tonic=\"C\"></div>\n<p>O unico movimento genuinamente dificil da escala e o polegar cruzando por baixo da mao. Tudo o mais e caminhada. Entao o criterio de qualidade e um so: <strong>nao dar para ouvir onde o polegar passou</strong>.</p>\n<p>Se voce escuta um acento a cada tres ou quatro notas, a passagem esta tardia — o polegar deve comecar a se deslocar por baixo da palma <em>antes</em> de precisar tocar, com o cotovelo acompanhando lateralmente. Nao gire o pulso.</p>\n<div class=\"callout\">Comece por Si maior e Fa sustenido maior, nao por Do. Do maior e a escala ergonomicamente mais dificil: todas as teclas na mesma altura, sem relevo para a mao se orientar. As tonalidades com teclas pretas guiam a mao sozinhas. Era o metodo de Chopin.</div>\n<h3>Arpejo da triade</h3>\n<p>Ataca o problema nº 3: abertura da mao.</p>\n<div class=\"w\" data-w=\"exercise\" data-ex=\"arpejo-triade\" data-tonic=\"C\"></div>\n<p>O erro classico e <strong>esticar os dedos</strong> para alcancar. O certo e deslocar o braco: a mao mantem a forma e viaja. Se voce sente tensao entre o polegar e o indicador, esta esticando.</p>\n<p>Troque para uma escala menor no seletor e o arpejo vira menor automaticamente — a triade sai do proprio campo harmonico da escala escolhida.</p>\n<h3>Tercas diatonicas</h3>\n<p>Ataca o problema nº 1: igualdade entre dedos, mas de forma mais severa.</p>\n<div class=\"w\" data-w=\"exercise\" data-ex=\"tercas-diatonicas\" data-tonic=\"C\"></div>\n<p>Duas vozes simultaneas na mesma mao expõem qualquer atraso: se um dedo chega tarde, o intervalo deixa de soar como bloco e vira um quebrado audivel. Nao ha como esconder.</p>\n<p>Toque devagar o suficiente para que as duas notas soem <strong>exatamente</strong> juntas. Este e provavelmente o exercicio mais difícil dos quatro; nao se assuste com um andamento bem baixo no comeco.</p>\n<h3>Movimento contrario</h3>\n<p>Ataca o problema nº 4: independencia das maos — e e o ponto de partida certo.</p>\n<div class=\"w\" data-w=\"exercise\" data-ex=\"movimento-contrario\" data-tonic=\"C\"></div>\n<p>Parece mais dificil que o movimento paralelo, mas e mais facil, e por um motivo anatomico: as maos espelhadas usam <strong>os mesmos dedos ao mesmo tempo</strong>. O dedo 3 esquerdo toca junto com o 3 direito. O cerebro trata isso como um gesto unico.</p>\n<p>Por isso, se voce esta comecando a juntar as maos, comece por aqui e nao pela escala paralela.</p>\n<h3>Cadencia I – IV – I – V – I</h3>\n<p>Nao e exercicio de mecanismo, e sim de mapa: fixa o campo harmonico na mao.</p>\n<div class=\"w\" data-w=\"exercise\" data-ex=\"cadencia-i-iv-v-i\" data-tonic=\"C\"></div>\n<p>Tocada nas doze tonalidades, ensina o teclado melhor que qualquer tabela — porque o que fica na memoria e o <strong>gesto</strong> de ir para a subdominante e voltar, nao o nome dos acordes.</p>",
+          "practice": [
+            "Escala em duas oitavas, maos separadas, 60 bpm, gravando. Escute so a nota do polegar.",
+            "Arpejo em tres tonalidades diferentes, prestando atencao ao deslocamento do cotovelo.",
+            "Movimento contrario a 72 bpm — e o mais facil dos quatro para coordenar as maos."
+          ]
+        }
+      ]
+    }
+  );
+})(typeof window !== "undefined" ? window : globalThis);
